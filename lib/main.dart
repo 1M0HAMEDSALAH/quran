@@ -6,7 +6,7 @@ import 'package:quran_app/routes/app_pages.dart';
 import 'notification_service.dart';
 
 void main() async {
-  await GetStorage.init();   
+  await GetStorage.init();
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize the SettingsController to load user preferences
@@ -35,7 +35,9 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,  // Dynamically set theme
+      themeMode: isDarkMode
+          ? ThemeMode.dark
+          : ThemeMode.light, // Dynamically set theme
       initialRoute: AppPages.routes[0].name,
       getPages: AppPages.routes,
     );

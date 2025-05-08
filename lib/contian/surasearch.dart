@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quran/quran.dart';
 
-
-
 class SurahSearchDelegate extends SearchDelegate<int> {
   @override
   List<Widget> buildActions(BuildContext context) {
@@ -20,9 +18,7 @@ class SurahSearchDelegate extends SearchDelegate<int> {
   @override
   Widget buildLeading(BuildContext context) {
     return IconButton(
-      icon: Icon(
-         Icons.arrow_back
-      ),
+      icon: Icon(Icons.arrow_back),
       onPressed: () {
         Get.back();
       },

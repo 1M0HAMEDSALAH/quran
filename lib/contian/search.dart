@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quran/quran.dart' as quran;
 
+import '../const/app_theme.dart';
 import 'displaysurrah.dart';
 
 /// Controller for managing Quran search functionality.
@@ -146,10 +147,11 @@ class SearchScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text(
             'البحث في القرآن الكريم',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold ,color: Colors.white),
+            style: TextStyle(
+                fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
           ),
           centerTitle: true,
-          backgroundColor: Colors.teal[700],
+          backgroundColor: AppTheme.primaryColor,
         ),
         body: Container(
           decoration: BoxDecoration(

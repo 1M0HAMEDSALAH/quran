@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../const/app_theme.dart';
+
 class SettingsController extends GetxController {
   final storage = GetStorage();
   final fontSize = 22.0.obs;
@@ -107,7 +109,7 @@ class SettingsScreen extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.teal[700],
+          backgroundColor: AppTheme.primaryColor,
           title: Text(
             'الإعدادات',
             style: TextStyle(

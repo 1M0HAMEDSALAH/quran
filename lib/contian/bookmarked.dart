@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:quran_app/contian/displaysurrah.dart';
 
+import '../const/app_theme.dart';
+
 class BookmarkController extends GetxController {
   final storage = GetStorage();
   final bookmarks = <Map<String, dynamic>>[].obs;
@@ -68,7 +70,7 @@ class BookmarkScreen extends StatelessWidget {
       textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
-          title: Text(
+          title: const Text(
             'المفضلة',
             style: TextStyle(
               fontSize: 22,
@@ -78,7 +80,7 @@ class BookmarkScreen extends StatelessWidget {
           ),
           centerTitle: true,
           elevation: 0,
-          backgroundColor: Colors.teal[700],
+          backgroundColor: AppTheme.primaryColor,
         ),
         body: Container(
           decoration: BoxDecoration(
@@ -86,7 +88,7 @@ class BookmarkScreen extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Color(0xFF1F6E8C).withOpacity(0.1),
+               const  Color(0xFF1F6E8C).withOpacity(0.1),
                 Colors.white,
               ],
             ),
@@ -102,7 +104,7 @@ class BookmarkScreen extends StatelessWidget {
                       size: 80,
                       color: Colors.grey.shade300,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       'لا توجد آيات في المفضلة',
                       style: TextStyle(
@@ -110,7 +112,7 @@ class BookmarkScreen extends StatelessWidget {
                         color: Colors.grey.shade400,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'يمكنك إضافة الآيات إلى المفضلة أثناء القراءة',
                       style: TextStyle(
@@ -128,7 +130,7 @@ class BookmarkScreen extends StatelessWidget {
                 controller.loadBookmarks(); // تحديث البيانات عند السحب
               },
               child: ListView.builder(
-                padding: EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 itemCount: controller.bookmarks.length,
                 itemBuilder: (context, index) {
                   final bookmark = controller.bookmarks[index];
@@ -142,7 +144,7 @@ class BookmarkScreen extends StatelessWidget {
                         color: Colors.red.shade400,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
+                      child:const Icon(
                         Icons.delete_outline,
                         color: Colors.white,
                         size: 30,
@@ -153,7 +155,7 @@ class BookmarkScreen extends StatelessWidget {
                     },
                     child: Card(
                       elevation: 2,
-                      margin: EdgeInsets.only(bottom: 12),
+                      margin: const EdgeInsets.only(bottom: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
