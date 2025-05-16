@@ -1,4 +1,4 @@
-// surah_list_controller.dart
+// surah_list_controller.dart - updated version
 import 'dart:convert';
 import 'package:get/get.dart';
 // ignore: depend_on_referenced_packages
@@ -6,10 +6,12 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:quran_app/contian/setting.dart';
 import '../azkar/view/azkar_view.dart';
 import '../const/app_theme.dart';
 import 'displaysurrah.dart';
 import 'surasearch.dart';
+import 'hijri_calendar_widget.dart'; // Import the new widget
 
 class SurahListController extends GetxController {
   // Observable variables
@@ -81,7 +83,7 @@ class SurahListController extends GetxController {
     Get.defaultDialog(
       title: 'تفسير الآية رقم $verseNumber',
       titleStyle: Get.textTheme.headlineMedium?.copyWith(
-        color: AppTheme.primaryColor,
+        color: AppColor.primaryColor,
         fontWeight: FontWeight.bold,
       ),
       content: Container(
@@ -107,7 +109,7 @@ class SurahListController extends GetxController {
         ElevatedButton(
           onPressed: () => Get.back(),
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primaryColor,
+            backgroundColor: AppColor.primaryColor,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
@@ -131,25 +133,82 @@ class SurahListController extends GetxController {
 
 class SurahListView extends GetView<SurahListController> {
   SurahListView({super.key});
+  final settingsController = Get.find<SettingsController>();
 
   final SurahListController surahListController =
       Get.put(SurahListController());
+  final HijriCalendarController hijriController =
+      Get.put(HijriCalendarController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: _buildAppBar(context),
-      body: Column(
-        children: [
-          _buildCategorySelector(),
-          Expanded(
-            child: Obx(() => _buildBody()),
+      body: CustomScrollView(
+        slivers: [
+          // Hijri Calendar
+          SliverToBoxAdapter(
+            child: HijriCalendarWidget(),
           ),
+
+          // Category Selector
+          SliverToBoxAdapter(
+            child: _buildCategorySelector(),
+          ),
+
+          // Surah Grid
+          Obx(() {
+            if (controller.isLoading.value) {
+              return SliverToBoxAdapter(
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColor.primaryColor,
+                  ),
+                ),
+              );
+            }
+
+            return SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 15,
+                  mainAxisSpacing: 15,
+                  childAspectRatio: 3 / 2,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final surahNumber = controller.filteredSurahs[index];
+                    return AnimationConfiguration.staggeredGrid(
+                      position: index,
+                      duration: const Duration(milliseconds: 375),
+                      columnCount: 2,
+                      child: SlideAnimation(
+                        verticalOffset: 50.0,
+                        child: FadeInAnimation(
+                          child: _buildSurahCard(surahNumber),
+                        ),
+                      ),
+                    );
+                  },
+                  childCount: controller.filteredSurahs.length,
+                ),
+              ),
+            );
+          }),
+
+          SliverPadding(
+            padding: const EdgeInsets.only(bottom: 75),
+            sliver: SliverToBoxAdapter(child: Container()),
+          )
         ],
       ),
     );
   }
 
+  // Keep all your other methods the same (_buildAppBar, _buildCategorySelector,
+  // _buildSurahCard, _handleSearch, etc.)
   Widget _buildCategorySelector() {
     return Container(
       height: 50,
@@ -172,11 +231,11 @@ class SurahListView extends GetView<SurahListController> {
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
                     color:
-                        isSelected ? AppTheme.primaryColor : Colors.transparent,
+                        isSelected ? AppColor.primaryColor : Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
-                          ? AppTheme.primaryColor
+                          ? AppColor.primaryColor
                           : Colors.grey.shade300,
                     ),
                   ),
@@ -196,16 +255,13 @@ class SurahListView extends GetView<SurahListController> {
   }
 
   AppBar _buildAppBar(BuildContext context) {
+    final isDarkMode = settingsController.isDarkMode.value;
+
     return AppBar(
-      title: Text(
+      title: const Text(
         'القرآن الكريم',
-        style: Get.textTheme.headlineMedium?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
       ),
       centerTitle: true,
-      backgroundColor: AppTheme.primaryColor,
       elevation: 0,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
@@ -214,7 +270,10 @@ class SurahListView extends GetView<SurahListController> {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.search, color: Colors.white),
+          icon: Icon(
+            Icons.search,
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
           onPressed: () => _handleSearch(context),
         ),
       ],
@@ -230,7 +289,7 @@ class SurahListView extends GetView<SurahListController> {
           'assets/beads.png',
           width: 24,
           height: 24,
-          color: Colors.white,
+          color: isDarkMode ? Colors.white : Colors.black,
         ),
       ),
     );
@@ -246,48 +305,8 @@ class SurahListView extends GetView<SurahListController> {
     }
   }
 
-  Widget _buildBody() {
-    if (controller.isLoading.value) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppTheme.primaryColor,
-        ),
-      );
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-      child: AnimationLimiter(
-        child: GridView.builder(
-          physics: const BouncingScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 15,
-            mainAxisSpacing: 15,
-            childAspectRatio: 3 / 2,
-          ),
-          itemCount: controller.filteredSurahs.length,
-          itemBuilder: (context, index) {
-            final surahNumber = controller.filteredSurahs[index];
-            return AnimationConfiguration.staggeredGrid(
-              position: index,
-              duration: const Duration(milliseconds: 375),
-              columnCount: 2,
-              child: SlideAnimation(
-                verticalOffset: 50.0,
-                child: FadeInAnimation(
-                  child: _buildSurahCard(surahNumber),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
   Widget _buildSurahCard(int surahNumber) {
-    final bool isSelected = controller.selectedIndex.value == surahNumber - 1;
+    final isDarkMode = settingsController.isDarkMode.value;
 
     return Hero(
       tag: 'surah_$surahNumber',
@@ -307,10 +326,15 @@ class SurahListView extends GetView<SurahListController> {
                 ),
               ],
               gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryColor,
-                  AppTheme.primaryColor.withOpacity(0.8),
-                ],
+                colors: isDarkMode
+                    ? [
+                        AppColor.darkPrimaryColor,
+                        AppColor.darkPrimaryColor.withOpacity(0.8),
+                      ]
+                    : [
+                        AppColor.primaryColor,
+                        AppColor.primaryColor.withOpacity(0.8),
+                      ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -342,10 +366,6 @@ class SurahListView extends GetView<SurahListController> {
                     child: Center(
                       child: Text(
                         '$surahNumber',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
                       ),
                     ),
                   ),
@@ -366,10 +386,6 @@ class SurahListView extends GetView<SurahListController> {
                       getPlaceOfRevelation(surahNumber) == "Makkah"
                           ? 'مكية'
                           : 'مدنية',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                      ),
                     ),
                   ),
                 ),
@@ -389,17 +405,10 @@ class SurahListView extends GetView<SurahListController> {
                       const SizedBox(height: 4),
                       Text(
                         '(${getSurahName(surahNumber)})',
-                        style: Get.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.9),
-                          fontStyle: FontStyle.italic,
-                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${getVerseCount(surahNumber)} آية',
-                        style: Get.textTheme.bodySmall?.copyWith(
-                          color: Colors.white.withOpacity(0.8),
-                        ),
                       ),
                     ],
                   ),

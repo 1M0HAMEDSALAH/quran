@@ -166,13 +166,17 @@ class AthkarView extends GetView<AthkarController> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('الأذكار والتسبيح',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: "BahijTheSansArabic")),
           centerTitle: true,
           backgroundColor: Colors.teal[700],
           bottom: TabBar(
-            labelStyle:
-                TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            labelStyle: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontFamily: "BahijTheSansArabic"),
             tabs: [
               Tab(text: 'المسبحة'),
               Tab(text: 'أذكار الصباح'),
@@ -199,10 +203,10 @@ class AthkarView extends GetView<AthkarController> {
           Obx(() => Text(
                 '${controller.tasbihCount}',
                 style: TextStyle(
-                  fontSize: 72,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
+                    fontSize: 72,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                    fontFamily: "BahijTheSansArabic"),
               )),
           SizedBox(height: 20),
           GestureDetector(
@@ -268,7 +272,7 @@ class AthkarView extends GetView<AthkarController> {
   }
 
   Widget _buildAthkarCard(String text, int count, String reward) {
-    final RxInt currentCount = 0.obs; // عدد المرات التي ذُكر فيها الذكر
+    final RxInt currentCount = 0.obs;
 
     return Obx(() {
       final isCompleted = currentCount.value >= count;
@@ -291,25 +295,26 @@ class AthkarView extends GetView<AthkarController> {
               SizedBox(height: 8),
               Text(
                 'عدد التكرار المطلوب: $count',
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(
+                    color: Colors.grey[600], fontFamily: "BahijTheSansArabic"),
               ),
               SizedBox(height: 8),
               Text(
                 'الفضل: $reward',
                 style: TextStyle(
-                  color: Colors.teal,
-                  fontStyle: FontStyle.italic,
-                ),
+                    color: Colors.teal,
+                    fontStyle: FontStyle.italic,
+                    fontFamily: "BahijTheSansArabic"),
                 textDirection: TextDirection.rtl,
               ),
               SizedBox(height: 8),
               Text(
                 'عدد التكرارات الحالية: ${currentCount.value}',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: isCompleted ? Colors.green : Colors.red,
-                ),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isCompleted ? Colors.green : Colors.red,
+                    fontFamily: "BahijTheSansArabic"),
               ),
               SizedBox(height: 16),
               Center(
@@ -331,7 +336,9 @@ class AthkarView extends GetView<AthkarController> {
                       ),
                       child: Text(
                         isCompleted ? 'تم الإكمال' : 'اضغط لزيادة العدد',
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontFamily: "BahijTheSansArabic"),
                       ),
                     ),
                     SizedBox(width: 10),
@@ -347,7 +354,9 @@ class AthkarView extends GetView<AthkarController> {
                         ),
                         child: Text(
                           'إنقاص العدد',
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontFamily: "BahijTheSansArabic"),
                         ),
                       ),
                   ],

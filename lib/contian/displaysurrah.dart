@@ -20,10 +20,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
   final settingsController = Get.put(SettingsController());
   final ScrollController _scrollController = ScrollController();
 
-
-
   // زر تشغيل الصوت مع تحديد رقم الآية
   void _showOptions(BuildContext context) {
+    final isDarkMode = settingsController.isDarkMode.value;
+
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -33,16 +33,28 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         return Wrap(
           children: [
             ListTile(
-              title: Text("🕌 عرض تفسير السورة"),
+              title: Text(
+                "🕌 عرض تفسير السورة",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
+              ),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
             ListTile(
               title: Text(
-                  "🎧 تشغيل سورة ${getSurahNameArabic(widget.surahNumber)}"),
+                "🎧 تشغيل سورة ${getSurahNameArabic(widget.surahNumber)}",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
+              ),
               onTap: () {
-                Get.to(QuranPlayerScreen(surahNumber: widget.surahNumber,));
+                Get.to(QuranPlayerScreen(
+                  surahNumber: widget.surahNumber,
+                  surahName: getSurahNameArabic(widget.surahNumber),
+                ));
               },
             ),
           ],
@@ -92,7 +104,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.teal[700],
-                      borderRadius: BorderRadius.only(bottomLeft: Radius.circular(15) , bottomRight: Radius.circular(15)),
+                      borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15)),
                     ),
                     child: Text(
                       "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
@@ -182,23 +196,26 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       ),
     );
   }
-    List<InlineSpan> _buildVerses() {
+
+  List<InlineSpan> _buildVerses() {
     List<InlineSpan> spans = [];
     int verseCount = getVerseCount(widget.surahNumber);
+    final settingsController = Get.find<SettingsController>();
 
     for (int i = 1; i <= verseCount; i++) {
       final verse = getVerse(widget.surahNumber, i);
-      final isHighlighted =
-          i == widget.highlightedVerse; // التحقق إذا كانت الآية هي المميزة
+      final isHighlighted = i == widget.highlightedVerse;
+
+      // Get the font family from settings controller
+      final fontFamily = settingsController.arabicFontFamily;
 
       spans.addAll([
         TextSpan(
           text: verse,
           style: TextStyle(
-            fontSize: Get.find<SettingsController>().fontSize.value,
-            color: isHighlighted
-                ? Colors.red
-                : Colors.black87, // تغيير لون النص إذا كانت الآية مميزة
+            fontFamily: fontFamily,
+            fontSize: settingsController.fontSize.value,
+            color: isHighlighted ? Colors.red : Colors.black87,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -219,8 +236,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               decoration: BoxDecoration(
                 color: isHighlighted
                     ? Colors.red.withOpacity(0.1)
-                    : Color(0xFF1F6E8C).withOpacity(
-                        0.1), // تغيير لون الخلفية إذا كانت الآية مميزة
+                    : Color(0xFF1F6E8C).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(15),
               ),
               child: Obx(() => Row(
@@ -229,12 +245,10 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                       Text(
                         '\uFD3F${i.toString()}\uFD3E',
                         style: TextStyle(
-                          color: isHighlighted
-                              ? Colors.red
-                              : Color(
-                                  0xFF1F6E8C), // تغيير لون النص إذا كانت الآية مميزة
-                          fontSize:
-                              Get.find<SettingsController>().fontSize.value,
+                          fontFamily:
+                              fontFamily, // Apply the same font to verse numbers
+                          color: isHighlighted ? Colors.red : Color(0xFF1F6E8C),
+                          fontSize: settingsController.fontSize.value,
                         ),
                       ),
                       if (bookmarkController.isBookmarked(
@@ -243,10 +257,8 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                           padding: EdgeInsets.only(right: 4),
                           child: Icon(
                             Icons.bookmark,
-                            color: isHighlighted
-                                ? Colors.red
-                                : Color(
-                                    0xFF1F6E8C), // تغيير لون الأيقونة إذا كانت الآية مميزة
+                            color:
+                                isHighlighted ? Colors.red : Color(0xFF1F6E8C),
                             size: 16,
                           ),
                         ),
