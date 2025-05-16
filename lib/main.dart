@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:quran_app/const/app_themee.dart';
-import 'package:quran_app/contian/setting.dart';
 import 'package:quran_app/routes/app_pages.dart';
+import 'contian/setting.dart';
 import 'notification_service.dart';
 
 

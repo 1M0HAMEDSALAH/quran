@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quran/quran.dart';
 import 'package:quran_app/contian/bookmarked.dart';
+import 'package:quran_app/contian/dialog_verce_voice.dart';
 import 'package:quran_app/contian/setting.dart';
 import 'package:quran_app/contian/sound.dart';
 
@@ -222,6 +223,19 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
         WidgetSpan(
           alignment: PlaceholderAlignment.middle,
           child: GestureDetector(
+            onTap: () {
+              final verse = getVerse(widget.surahNumber, i); // موجود أصلًا
+              showDialog(
+                context: context,
+                barrierDismissible: true,
+                barrierColor: Colors.black.withOpacity(0.5),
+                builder: (context) => AudioPlayerDialog(
+                  surahNumber: widget.surahNumber,
+                  verseNumber: i,
+                  verseText: verse, // أضف هذا
+                ),
+              );
+            },
             onLongPress: () {
               bookmarkController.toggleBookmark({
                 'surah': getSurahName(widget.surahNumber),
