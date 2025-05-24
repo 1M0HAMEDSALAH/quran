@@ -38,5 +38,5 @@ To run this project locally:
 1. **Clone the repository:**
 
 ```bash
-git clone https://github.com/your-username/quran_app.git
+git clone https://github.com/1M0HAMEDSALAH/quran_app.git
 cd quran_app
