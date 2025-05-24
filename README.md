@@ -4,7 +4,7 @@ A modern and beautifully designed Quran application built with Flutter.
 
 ## 🕌 Overview
 
-The **Quran App** is a Flutter-based mobile application that allows users to read and explore the Holy Quran with ease. It features elegant UI, smooth navigation, and Quranic surahs display. This project is ideal for showcasing Flutter development, UI/UX design, and integration with local assets or APIs.
+The **Quran App** is a Flutter-based mobile application that allows users to read and explore the Holy Quran with ease. It features elegant UI, smooth navigation, and Quranic surahs display. This project is ideal for showcasing Flutter development, UI/UX design, and integration with  => quran: ^1.3.1.
 
 ## ✨ Features
 
@@ -27,8 +27,8 @@ The **Quran App** is a Flutter-based mobile application that allows users to rea
 
 - **Flutter** – UI framework
 - **Dart** – Programming language
-- **State Management** – (e.g. BLoC or Provider) *(specify if used)*
-- **Local JSON/Assets** – For Quranic data *(if applicable)*
+- **State Management** – (Getx)
+- **quran: ^1.3.1** – For Quranic data
 - **Custom UI/UX** – Flutter widgets and theming
 
 ## 🚀 Getting Started
