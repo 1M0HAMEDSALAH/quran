@@ -1,322 +1,213 @@
-import 'dart:io';
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:get/get.dart';
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:get_storage/get_storage.dart';
-import 'dart:math';
+import 'package:flutter/material.dart';
 
+/// خدمة الإشعارات لتطبيق القرآن الكريم
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
-  final GetStorage storage = GetStorage();
-  final Random random = Random();
+  static const String _channelId = 'quran_reminder_channel';
+  static const String _channelName = 'Quran Reminders';
+  static const String _channelDescription = 'تذكيرات بقراءة القرآن الكريم';
 
-  static const String dailyChannelId = 'daily_quran_reminder';
-  static const String dailyChannelName = 'تذكير يومي بالقرآن';
-  static const String dailyChannelDescription =
-      'تذكير يومي لقراءة القرآن الكريم';
+  static const int _defaultInterval = 6;
+  static const int _defaultNotificationCount = 4;
 
-  final List<String> reminderMessages = [
-    'حان وقت قراءة القرآن الكريم 🕌',
-    'لا تنس نصيبك من كتاب الله 📖',
-    'اقرأ القرآن واجعل يومك مباركاً ✨',
-    'وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا 🌟',
-    'اجعل للقرآن نصيباً في يومك 🤲',
+  static const List<String> _notificationTitles = [
+    '📖 وردك من القرآن',
+    '🕌 حان وقت القرآن',
+    '🤲 تذكير بتلاوة القرآن',
+    '☪️ لا تنس نصيبك من القرآن',
   ];
 
-  Future<void> init() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+  static const List<String> _notificationMessages = [
+    'لا تنسَ قراءة القرآن اليوم!',
+    'اقرأ آيات من كتاب الله وارفع درجاتك',
+    'القرآن شفيع لأصحابه يوم القيامة',
+    'من قرأ حرفاً من كتاب الله فله به حسنة',
+  ];
 
-    final DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
+  final FlutterLocalNotificationsPlugin _notificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  String _currentTimeZone = 'Africa/Cairo';
+  int _notificationCount = _defaultNotificationCount;
+  int _notificationInterval = _defaultInterval;
+
+  /// تهيئة الخدمة بدون استخدام SharedPreferences
+  Future<void> initialize({
+    int notificationCount = _defaultNotificationCount,
+    int notificationInterval = _defaultInterval,
+    String timeZone = 'Africa/Cairo',
+  }) async {
+    _notificationCount = notificationCount;
+    _notificationInterval = notificationInterval;
+    _currentTimeZone = timeZone;
+
+    await _configureLocalTimeZone();
+    await _initializeNotifications();
+    await scheduleRepeatedNotifications();
+
+    debugPrint('✅ NotificationService: Initialized without preferences');
+  }
+
+  Future<void> _configureLocalTimeZone() async {
+    try {
+      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation(_currentTimeZone));
+      debugPrint('🌐 Time zone set to $_currentTimeZone');
+    } catch (e) {
+      debugPrint('⚠️ Time zone setup failed: $e');
+      tz.setLocalLocation(tz.getLocation('UTC'));
+    }
+  }
+
+  Future<void> _initializeNotifications() async {
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
-      // Handle foreground notifications on iOS
-      notificationCategories: [
-        DarwinNotificationCategory(
-          dailyChannelId,
-          actions: [
-            DarwinNotificationAction.plain(
-              'open',
-              'Open',
-              options: {DarwinNotificationActionOption.foreground},
-            ),
-          ],
-        )
-      ],
     );
 
-    final InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
+    const initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
     );
 
-    // Initialize with proper callback handling
-    await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) async {
-        handleNotificationTap(response);
-      },
-      // This is for iOS when app is terminated and opened from notification
-      onDidReceiveBackgroundNotificationResponse: backgroundNotificationHandler,
+    final didInit = await _notificationsPlugin.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: _onNotificationTapped,
     );
 
-    // Set up foreground notification presentation options (show notifications when app is in foreground)
-    await flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>()
-        ?.requestNotificationsPermission();
-
-    if (Platform.isIOS) {
-      // This is how we handle foreground notifications on iOS in the newer versions
-      // of the plugin by setting up a listener
-      flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
-    }
-
-    tz.initializeTimeZones();
+    debugPrint('🔔 Initialization ${didInit != null ? "succeeded" : "failed"}');
+    await _requestPermissions();
   }
 
-  // This is needed for Android 12+ background handling
-  @pragma('vm:entry-point')
-  static void backgroundNotificationHandler(NotificationResponse response) {
-    // Navigate to the appropriate screen when app is launched from notification
-    if (response.payload != null) {
-      // You can parse payload and take action based on it
-      Get.toNamed('/quran-page');
-    }
+  Future<void> _requestPermissions() async {
+    final ios = _notificationsPlugin.resolvePlatformSpecificImplementation<
+        IOSFlutterLocalNotificationsPlugin>();
+    await ios?.requestPermissions(alert: true, badge: true, sound: true);
+
+    final android = _notificationsPlugin.resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+    await android?.requestNotificationsPermission();
+
+    debugPrint('🔐 Notification permissions requested');
   }
 
-  void handleNotificationTap(NotificationResponse response) {
-    // Handle notification tap based on payload or notification id
-    if (response.payload != null) {
-      Map<String, dynamic> payloadData = {};
-      try {
-        // Parse the payload if it's in JSON format
-        // Note: You might want to implement proper JSON parsing here
-        final payload = response.payload!;
-        Get.toNamed('/quran-page', arguments: payload);
-      } catch (e) {
-        print('Error parsing notification payload: $e');
-        // Default fallback
-        Get.toNamed('/quran-page');
-      }
-    } else {
-      // Default navigation when no specific payload
-      Get.toNamed('/quran-page');
-    }
+  void _onNotificationTapped(NotificationResponse response) {
+    debugPrint('👆 Notification tapped: ${response.id}');
+    // Navigate or handle the notification tap if needed
   }
 
-  Future<bool> requestPermissions() async {
-    if (GetPlatform.isIOS) {
-      final bool? result = await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
-      return result ?? false;
-    } else if (GetPlatform.isAndroid) {
-      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-
-      // Request notification permissions
-      final bool? notificationPermissionGranted =
-          await androidImplementation?.requestNotificationsPermission();
-
-      // Request exact alarms permission for Android 12 and above
-      final bool? exactAlarmsPermissionGranted =
-          await androidImplementation?.requestExactAlarmsPermission();
-
-      return (notificationPermissionGranted ?? false) &&
-          (exactAlarmsPermissionGranted ??
-              true); // Default to true if null for backward compatibility
-    }
-    return false;
-  }
-
-  Future<bool> checkNotificationPermissions() async {
-    if (GetPlatform.isAndroid) {
-      final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
-
-      return await androidImplementation?.areNotificationsEnabled() ?? false;
-    } else if (GetPlatform.isIOS) {
-      // For iOS, we don't have a direct way to check, so we'll rely on the stored value
-      // or assume it's enabled if they previously granted it
-      return storage.read('notifications_enabled') ?? false;
-    }
-    return false;
-  }
-
-  String _getRandomMessage() {
-    return reminderMessages[random.nextInt(reminderMessages.length)];
-  }
-
-  // Show immediate notification when app is in foreground
-  Future<void> showForegroundNotification({
-    String? title,
-    String? body,
-    String? payload,
-  }) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      dailyChannelId,
-      dailyChannelName,
-      channelDescription: dailyChannelDescription,
+  NotificationDetails _createNotificationDetails({
+    String sound = 'adhan',
+    bool enableVibration = true,
+    Color? color,
+  }) {
+    final androidDetails = AndroidNotificationDetails(
+      _channelId,
+      _channelName,
+      channelDescription: _channelDescription,
       importance: Importance.max,
       priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
+      enableVibration: enableVibration,
+      color: color,
+      sound:
+          sound.isNotEmpty ? RawResourceAndroidNotificationSound(sound) : null,
       styleInformation: BigTextStyleInformation(''),
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+      icon: '@mipmap/ic_launcher',
     );
 
-    const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails(
+    final iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: sound.isNotEmpty ? '$sound.aiff' : null,
     );
 
-    final NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
-
-    await flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecond, // Use dynamic ID to avoid overwriting
-      title ?? 'تذكير القرآن اليومي',
-      body ?? _getRandomMessage(),
-      platformChannelSpecifics,
-      payload: payload,
-    );
+    return NotificationDetails(android: androidDetails, iOS: iosDetails);
   }
 
-  Future<void> scheduleDailyNotification({
-    int hour = 6,
-    int minute = 0,
-  }) async {
-    final bool granted = await requestPermissions();
-    if (!granted) {
-      print('لم يتم منح أذونات الإشعارات');
-      return;
-    }
-
-    // Store that notifications are enabled
-    storage.write('notifications_enabled', true);
-    storage.write('notification_hour', hour);
-    storage.write('notification_minute', minute);
-
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      dailyChannelId,
-      dailyChannelName,
-      channelDescription: dailyChannelDescription,
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: true,
-      enableVibration: true,
-      styleInformation: BigTextStyleInformation(''),
-      largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-      // For Android 13+, this ensures notification appears on lock screen
-      visibility: NotificationVisibility.public,
-    );
-
-    const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-      // Use a distinct sound for the notification if needed
-      // sound: 'slow_spring_board.aiff',
-    );
-
-    final NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-      iOS: iOSPlatformChannelSpecifics,
-    );
-
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    tz.TZDateTime scheduledDate = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      hour,
-      minute,
-    );
-
-    if (scheduledDate.isBefore(now)) {
-      scheduledDate = scheduledDate.add(const Duration(days: 1));
-    }
-
+  Future<void> scheduleRepeatedNotifications() async {
     try {
-      await flutterLocalNotificationsPlugin.zonedSchedule(
-        0, // Use ID 0 for the daily notification
-        'تذكير القرآن اليومي',
-        _getRandomMessage(),
-        scheduledDate,
-        platformChannelSpecifics,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime,
-        matchDateTimeComponents: DateTimeComponents.time,
-        payload:
-            'daily_reminder', // Add payload to identify this notification type
-      );
+      await _notificationsPlugin.cancelAll();
 
-      print('تم جدولة الإشعار في الساعة $hour:$minute');
+      final now = DateTime.now();
+      final localNow = tz.TZDateTime.from(now, tz.local);
+
+      for (int i = 0; i < _notificationCount; i++) {
+        final scheduledTime = _calculateNotificationTime(localNow, i);
+        final titleIndex = i % _notificationTitles.length;
+        final messageIndex = i % _notificationMessages.length;
+
+        await _notificationsPlugin.zonedSchedule(
+          i,
+          _notificationTitles[titleIndex],
+          _notificationMessages[messageIndex],
+          scheduledTime,
+          _createNotificationDetails(),
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          matchDateTimeComponents: DateTimeComponents.time,
+        );
+
+        debugPrint('📅 Notification #$i scheduled at $scheduledTime');
+      }
+
+      debugPrint('✅ $_notificationCount notifications scheduled');
     } catch (e) {
-      print('Error scheduling notification: $e');
-      // Handle the error appropriately
+      debugPrint('⚠️ Failed to schedule notifications: $e');
     }
   }
 
-  // Method to check if a daily notification is currently scheduled
-  Future<bool> isNotificationScheduled() async {
-    final List<PendingNotificationRequest> pendingNotifications =
-        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
+  tz.TZDateTime _calculateNotificationTime(tz.TZDateTime baseTime, int index) {
+    tz.TZDateTime scheduledTime =
+        baseTime.add(Duration(hours: _notificationInterval * index));
+    if (scheduledTime.isBefore(baseTime)) {
+      scheduledTime = scheduledTime.add(const Duration(days: 1));
+    }
+    return scheduledTime;
+  }
 
-    // Check if notification with ID 0 (our daily notification) exists
-    return pendingNotifications.any((notification) => notification.id == 0);
+  Future<void> setTimeZone(String timeZone) async {
+    try {
+      _currentTimeZone = timeZone;
+      tz.setLocalLocation(tz.getLocation(timeZone));
+      await scheduleRepeatedNotifications();
+      debugPrint('🌐 Time zone changed to $timeZone');
+    } catch (e) {
+      debugPrint('⚠️ Failed to change time zone: $e');
+    }
+  }
+
+  Future<void> setNotificationCount(int count) async {
+    if (count > 0 && count <= 10) {
+      _notificationCount = count;
+      await scheduleRepeatedNotifications();
+      debugPrint('🔢 Notification count set to $count');
+    } else {
+      debugPrint('⚠️ Invalid notification count: $count');
+    }
+  }
+
+  Future<void> setNotificationInterval(int hours) async {
+    if (hours > 0 && hours <= 12) {
+      _notificationInterval = hours;
+      await scheduleRepeatedNotifications();
+      debugPrint('⏱️ Interval set to $hours hours');
+    } else {
+      debugPrint('⚠️ Invalid interval: $hours');
+    }
   }
 
   Future<void> cancelAllNotifications() async {
-    await flutterLocalNotificationsPlugin.cancelAll();
-    await storage.write('notifications_enabled', false);
-    await storage.remove('notification_hour');
-    await storage.remove('notification_minute');
-  }
-
-  Future<Map<String, int>> getScheduledTime() async {
-    return {
-      'hour': storage.read('notification_hour') ?? 15,
-      'minute': storage.read('notification_minute') ?? 0,
-    };
-  }
-
-  Future<void> updateNotificationTime(int hour, int minute) async {
-    await cancelAllNotifications();
-    await scheduleDailyNotification(hour: hour, minute: minute);
+    await _notificationsPlugin.cancelAll();
+    debugPrint('❌ All notifications canceled');
   }
 }

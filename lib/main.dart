@@ -1,23 +1,20 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:quran_app/const/app_themee.dart';
-import 'package:quran_app/routes/app_pages.dart';
-import 'contian/setting.dart';
-import 'notification_service.dart';
-
-
+import 'package:quran_app/index.dart';
 
 void main() async {
   await GetStorage.init();
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize the SettingsController to load user preferences
-  Get.put(SettingsController());
+  await NotificationService().initialize(
+    notificationCount: 4,
+    notificationInterval: 6,
+    timeZone: 'Africa/Cairo',
+  );
 
-  final notificationService = NotificationService();
-  await notificationService.init();
-  await notificationService.scheduleDailyNotification();
+  // Initialize the SettingsController to load user preferences
+  Get.put(SettingsController(), permanent: true);
+
+  // Initialize QuranPlayerController for global access
+  Get.put(QuranPlayerController(), permanent: true);
 
   runApp(MyApp());
 }
@@ -35,12 +32,33 @@ class MyApp extends StatelessWidget {
         title: 'Quran App',
         theme: theme(),
         darkTheme: darkTheme(),
-        themeMode: settingsController.isDarkMode.value 
-            ? ThemeMode.dark 
+        themeMode: settingsController.isDarkMode.value
+            ? ThemeMode.dark
             : ThemeMode.light,
         initialRoute: AppPages.routes[0].name,
-        getPages: AppPages.routes,
+        getPages: _wrapRoutesWithLayout(AppPages.routes),
       );
     });
+  }
+
+  // Helper method to wrap routes with AppLayout
+  List<GetPage> _wrapRoutesWithLayout(List<GetPage> routes) {
+    return routes.map((route) {
+      // Skip wrapping the QuranPlayerScreen route
+      if (route.name == '/quran-player') {
+        return route;
+      }
+
+      // Wrap other routes with AppLayout
+      return GetPage(
+        name: route.name,
+        page: () => AppLayout(child: route.page()),
+        binding: route.binding,
+        bindings: route.bindings,
+        middlewares: route.middlewares,
+        transition: route.transition,
+        transitionDuration: route.transitionDuration,
+      );
+    }).toList();
   }
 }
