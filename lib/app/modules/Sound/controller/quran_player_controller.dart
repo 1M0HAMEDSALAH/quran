@@ -14,7 +14,7 @@ class QuranPlayerController extends GetxController {
   var totalDuration = Rx<Duration?>(null);
   var currentSurah = 0.obs;
   var currentSurahName = ''.obs; // Add this to store current surah name
-  var currentReaderId = 'muhammadsiddiqalminshawimujawwad'.obs; // Default reader
+  var currentReaderId = 'abdulbasitmurattal'.obs; // Default reader
   var currentQuality = '128'.obs; // Default quality
   var isMiniPlayerVisible = false.obs; // Track mini player visibility
 

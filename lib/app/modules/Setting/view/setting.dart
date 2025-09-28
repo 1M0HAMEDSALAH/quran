@@ -350,15 +350,8 @@ class SettingsScreen extends StatelessWidget {
   void _showRatingSnackbar(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('شكرا لدعمكم للتطبيق'),
+        content: const Text('شكرا لدعمكم للتطبيق'),
         backgroundColor: AppColor.primaryColor,
-        action: SnackBarAction(
-          label: 'التقييم',
-          textColor: Colors.white,
-          onPressed: () {
-            // Open app store
-          },
-        ),
       ),
     );
   }

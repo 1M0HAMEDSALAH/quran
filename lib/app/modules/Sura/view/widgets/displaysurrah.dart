@@ -41,9 +41,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                 ),
-                onTap: () {
-                  Navigator.pop(context);
-                },
+                // onTap: () {
+                //   Navigator.pop(context);
+                // },
               ),
               ListTile(
                 title: Text(

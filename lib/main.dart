@@ -1,19 +1,25 @@
 import 'package:quran_app/index.dart';
 
 void main() async {
-  await GetStorage.init();
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // تهيئة التخزين المحلي أولاً
+  await GetStorage.init();
 
-  await NotificationService().initialize(
-    notificationCount: 4,
-    notificationInterval: 6,
-    timeZone: 'Africa/Cairo',
-  );
+  try {
+    // تهيئة خدمة الإشعارات بدون طلب الصلاحيات
+    await NotificationService().initialize(
+      notificationCount: 4,
+      notificationInterval: 6,
+      timeZone: 'Africa/Cairo',
+      requestPermissions: true, // لا نطلب الصلاحيات عند بدء التطبيق
+    );
+  } catch (e) {
+    debugPrint('⚠️ Error initializing NotificationService: $e');
+  }
 
-  // Initialize the SettingsController to load user preferences
+  // تهيئة المتحكمات
   Get.put(SettingsController(), permanent: true);
-
-  // Initialize QuranPlayerController for global access
   Get.put(QuranPlayerController(), permanent: true);
 
   runApp(MyApp());

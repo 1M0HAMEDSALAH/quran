@@ -1,6 +1,5 @@
 import 'package:quran_app/index.dart';
 
-
 class SurahListView extends GetView<SurahListController> {
   SurahListView({super.key});
   final settingsController = Get.find<SettingsController>();
@@ -12,6 +11,8 @@ class SurahListView extends GetView<SurahListController> {
 
   @override
   Widget build(BuildContext context) {
+    Get.put(AzkarController());
+
     return Scaffold(
       appBar: _buildAppBar(context),
       body: CustomScrollView(
@@ -147,7 +148,7 @@ class SurahListView extends GetView<SurahListController> {
       leading: IconButton(
         onPressed: () {
           Get.to(
-            () => AthkarView(),
+            () => const AzkarView(),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 300),
           );

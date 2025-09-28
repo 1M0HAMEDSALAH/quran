@@ -1,288 +1,264 @@
 import 'package:quran_app/index.dart';
 
-
-class AthkarController extends GetxController {
+class AzkarController extends GetxController {
+  // Tasbih counter
   final RxInt tasbihCount = 0.obs;
   final RxInt dailyTargetCount = 100.obs;
-  final RxList<String> completedMorningAthkar = <String>[].obs;
-  final RxList<String> completedEveningAthkar = <String>[].obs;
+
+  // Azkar progress tracking
+  final RxMap<String, Map<int, int>> azkarProgress =
+      <String, Map<int, int>>{}.obs;
   final RxString lastCompletionDate = ''.obs;
+
+  // Data
+  final RxList<AzkarCategory> allCategories = <AzkarCategory>[].obs;
+  final RxList<AzkarCategory> morningAzkar = <AzkarCategory>[].obs;
+  final RxList<AzkarCategory> eveningAzkar = <AzkarCategory>[].obs;
+  final RxBool isLoading = true.obs;
+
+  static const String _progressKey = 'azkar_progress';
+  static const String _lastDateKey = 'last_completion_date';
+  static const String _tasbihKey = 'tasbih_count';
 
   @override
   void onInit() {
     super.onInit();
-    loadAthkarData();
+    initializeAzkar();
   }
 
-  // قائمة أذكار الصباح
-  final List<Map<String, dynamic>> morningAthkar = [
-    {
-      'text': 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ',
-      'count': 100,
-      'reward': 'حُطَّتْ خَطَايَاهُ وَإِنْ كَانَتْ مِثْلَ زَبَدِ الْبَحْرِ',
-    },
-    {
-      'text': 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ',
-      'count': 3,
-      'reward': 'لم يضره شيء',
-    },
-    {
-      'text':
-          'لَا إِلَهَ إِلَّا اللَّهُ وَحْدَهُ لَا شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ، وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ',
-      'count': 100,
-      'reward':
-          'كان له عدل عشر رقاب، وكتبت له مئة حسنة، ومحيت عنه مئة سيئة، وكانت له حرزًا من الشيطان يومه ذلك حتى يمسي',
-    },
-    {
-      'text':
-          'سُبْحَانَ اللَّهِ وَالْحَمْدُ لِلَّهِ وَلَا إِلَهَ إِلَّا اللَّهُ وَاللَّهُ أَكْبَرُ',
-      'count': 33,
-      'reward': 'أحب الكلام إلى الله وأثقلها في الميزان',
-    },
-    {
-      'text': 'اللَّهُمَّ صَلِّ وَسَلِّمْ عَلَى نَبِيِّنَا مُحَمَّدٍ',
-      'count': 10,
-      'reward': 'يصلي الله عليه بها عشرًا',
-    },
-    {
-      'text': 'أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ',
-      'count': 100,
-      'reward': 'sتكفير الذنوب',
-    },
-    {
-      'text': 'اللَّهُمَّ أَجِرْنِي مِنَ النَّارِ',
-      'count': 7,
-      'reward':
-          'إذا قالها بعد الفجر والمغرب سبع مرات كتب الله له النجاة من النار',
-    },
-    {
-      'text':
-          'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ',
-      'count': 3,
-      'reward': 'لا يصيبه ضرر في ذلك اليوم أو تلك الليلة',
-    },
-    {
-      'text':
-          'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ',
-      'count': 1,
-      'reward': 'يحصل على العافية في الدين والدنيا والآخرة',
-    },
-    {
-      'text':
-          'اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ خَلَقْتَنِي وَأَنَا عَبْدُكَ',
-      'count': 1,
-      'reward': 'من قالها في الصباح أو المساء ومات دخل الجنة',
-    },
-  ];
+  Future<void> initializeAzkar() async {
+    isLoading.value = true;
 
-  // قائمة أذكار المساء
-  final List<Map<String, dynamic>> eveningAthkar = [
-    {
-      'text':
-          'اللَّهُمَّ بِكَ أَمْسَيْنَا، وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا، وَبِكَ نَمُوتُ، وَإِلَيْكَ الْمَصِيرُ',
-      'count': 1,
-      'reward': 'من قالها موقناً بها حين يمسي ومات من ليلته دخل الجنة',
-    },
-    {
-      'text':
-          'اللهم أنت ربي، لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك علي وأبوء بذنبي، فاغفر لي، فإنه لا يغفر الذنوب إلا أنت.',
-      'count': 1,
-      'reward': 'من قالها موقناً بها حين يمسي فمات من ليلته دخل الجنة',
-    },
-    {
-      'text':
-          'اللَّهُمَّ إِنِّي أَمْسَيْتُ أُشْهِدُكَ وَأُشْهِدُ حَمَلَةَ عَرْشِكَ وَمَلَائِكَتَكَ وَجَمِيعَ خَلْقِكَ، أَنَّكَ أَنْتَ اللَّهُ لَا إِلَهَ إِلَّا أَنْتَ، وَحْدَكَ لَا شَرِيكَ لَكَ، وَأَنَّ مُحَمَّدًا عَبْدُكَ وَرَسُولُكَ.',
-      'count': 4,
-      'reward': 'من قالها أربع مرات أعتقه الله من النار',
-    },
-    {
-      'text':
-          'اللَّهُمَّ مَا أَمْسَى بِي مِنْ نِعْمَةٍ أَوْ بِأَحَدٍ مِنْ خَلْقِكَ فَمِنْكَ وَحْدَكَ لَا شَرِيكَ لَكَ، فَلَكَ الْحَمْدُ وَلَكَ الشُّكْرُ.',
-      'count': 1,
-      'reward': 'من قالها مساءً أدى شكر يومه',
-    },
-    {
-      'text':
-          'حَسْبِيَ اللَّهُ لَا إِلَهَ إِلَّا هُوَ، عَلَيْهِ تَوَكَّلْتُ وَهُوَ رَبُّ الْعَرْشِ الْعَظِيمِ.',
-      'count': 7,
-      'reward': 'من قالها سبع مرات كفاه الله ما أهمه من أمر الدنيا والآخرة',
-    },
-    {
-      'text':
-          'بِسْمِ اللَّهِ الَّذِي لَا يَضُرُّ مَعَ اسْمِهِ شَيْءٌ فِي الْأَرْضِ وَلَا فِي السَّمَاءِ وَهُوَ السَّمِيعُ الْعَلِيمُ.',
-      'count': 3,
-      'reward': 'من قالها ثلاث مرات لم يضره شيء في ليلته',
-    },
-    {
-      'text': 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ.',
-      'count': 3,
-      'reward': 'من قالها ثلاث مرات لم تضره الحُمَةُ (السم أو الأذى) في ليلته',
-    },
-    {
-      'text':
-          'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي الدُّنْيَا وَالْآخِرَةِ، اللَّهُمَّ إِنِّي أَسْأَلُكَ الْعَفْوَ وَالْعَافِيَةَ فِي دِينِي وَدُنْيَايَ وَأَهْلِي وَمَالِي.',
-      'count': 1,
-      'reward': 'دعاء شامل لحفظ النفس والأهل والمال',
-    },
-  ];
+    try {
+      // Load azkar data from JSON
+      final categories = await AzkarService.loadAzkarCategories();
+      allCategories.value = categories;
 
-  Future<void> loadAthkarData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final today =
-        DateTime.now().toIso8601String().substring(0, 10); // YYYY-MM-DD
+      // Filter morning and evening azkar
+      morningAzkar.value = AzkarService.filterMorningAzkar(categories);
+      eveningAzkar.value = AzkarService.filterEveningAzkar(categories);
 
-    // Load last completion date
-    final storedDate = prefs.getString('lastCompletionDate') ?? '';
-    lastCompletionDate.value = storedDate;
+      // Load saved progress
+      await loadProgress();
 
-    // Reset if it's a new day
-    if (storedDate != today) {
-      await resetDailyAthkar();
-      lastCompletionDate.value = today;
-      await prefs.setString('lastCompletionDate', today);
-    } else {
-      // Load completed morning and evening athkar
-      final morningAthkarJson = prefs.getString('completedMorningAthkar');
-      final eveningAthkarJson = prefs.getString('completedEveningAthkar');
-
-      if (morningAthkarJson != null) {
-        completedMorningAthkar
-            .assignAll(List<String>.from(jsonDecode(morningAthkarJson)));
-      }
-      if (eveningAthkarJson != null) {
-        completedEveningAthkar
-            .assignAll(List<String>.from(jsonDecode(eveningAthkarJson)));
-      }
+      // Check if it's a new day and reset if needed
+      await checkAndResetDaily();
+    } catch (e) {
+      print('Error initializing azkar: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  Future<void> saveAthkarData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-        'completedMorningAthkar', jsonEncode(completedMorningAthkar));
-    await prefs.setString(
-        'completedEveningAthkar', jsonEncode(completedEveningAthkar));
+  Future<void> loadProgress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Load azkar progress
+      final progressJson = prefs.getString(_progressKey);
+      if (progressJson != null) {
+        final Map<String, dynamic> decoded = json.decode(progressJson);
+        azkarProgress.value = decoded
+            .map((key, value) => MapEntry(key, Map<int, int>.from(value)));
+      }
+
+      // Load other data
+      lastCompletionDate.value = prefs.getString(_lastDateKey) ?? '';
+      tasbihCount.value = prefs.getInt(_tasbihKey) ?? 0;
+    } catch (e) {
+      print('Error loading progress: $e');
+    }
   }
 
+  Future<void> saveProgress() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Save azkar progress
+      final progressJson = json.encode(azkarProgress);
+      await prefs.setString(_progressKey, progressJson);
+
+      // Save other data
+      await prefs.setString(_lastDateKey, lastCompletionDate.value);
+      await prefs.setInt(_tasbihKey, tasbihCount.value);
+    } catch (e) {
+      print('Error saving progress: $e');
+    }
+  }
+
+  Future<void> checkAndResetDaily() async {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    if (lastCompletionDate.value != today) {
+      await resetDailyProgress();
+      lastCompletionDate.value = today;
+      await saveProgress();
+    }
+  }
+
+  Future<void> resetDailyProgress() async {
+    azkarProgress.clear();
+    tasbihCount.value = 0;
+  }
+
+  // Tasbih methods
   void incrementTasbih() {
     if (tasbihCount.value < dailyTargetCount.value) {
       tasbihCount.value++;
+      saveProgress();
     }
+
     if (tasbihCount.value == dailyTargetCount.value) {
       Get.snackbar(
         'مبارك!',
         'لقد أكملت العدد المستهدف لليوم',
-        backgroundColor: Colors.green.withOpacity(0.1),
-        colorText: Colors.green,
+        backgroundColor: Get.theme.colorScheme.primary.withOpacity(0.1),
+        colorText: Get.theme.colorScheme.primary,
       );
     }
   }
 
   void resetTasbih() {
     tasbihCount.value = 0;
+    saveProgress();
   }
 
-  void markAthkarCompleted(String athkarText, bool isMorning) async {
-    final targetList =
-        isMorning ? completedMorningAthkar : completedEveningAthkar;
-    if (!targetList.contains(athkarText)) {
-      targetList.add(athkarText);
-      await saveAthkarData();
-      Get.snackbar(
-        'أحسنت!',
-        'تم إكمال الذكر',
-        backgroundColor: Colors.black,
-        colorText: Colors.white,
-      );
+  // Azkar progress methods
+  int getAzkarProgress(String categoryName, int azkarId) {
+    return azkarProgress[categoryName]?[azkarId] ?? 0;
+  }
+
+  void incrementAzkarProgress(
+      String categoryName, int azkarId, int requiredCount) {
+    if (!azkarProgress.containsKey(categoryName)) {
+      azkarProgress[categoryName] = {};
+    }
+
+    final currentCount = azkarProgress[categoryName]![azkarId] ?? 0;
+    if (currentCount < requiredCount) {
+      azkarProgress[categoryName]![azkarId] = currentCount + 1;
+
+      if (currentCount + 1 >= requiredCount) {
+        Get.snackbar(
+          'أحسنت!',
+          'تم إكمال الذكر',
+          backgroundColor: Get.theme.colorScheme.secondary.withOpacity(0.1),
+          colorText: Get.theme.colorScheme.secondary,
+        );
+      }
+
+      saveProgress();
     }
   }
 
-  Future<void> resetDailyAthkar() async {
-    completedMorningAthkar.clear();
-    completedEveningAthkar.clear();
-    tasbihCount.value = 0;
-    await saveAthkarData();
+  void decrementAzkarProgress(String categoryName, int azkarId) {
+    final currentCount = azkarProgress[categoryName]?[azkarId] ?? 0;
+    if (currentCount > 0) {
+      azkarProgress[categoryName]![azkarId] = currentCount - 1;
+      saveProgress();
+    }
   }
 
-  bool areAllMorningAthkarCompleted() {
-    return morningAthkar
-        .every((athkar) => completedMorningAthkar.contains(athkar['text']));
+  bool isAzkarCompleted(String categoryName, int azkarId, int requiredCount) {
+    return getAzkarProgress(categoryName, azkarId) >= requiredCount;
   }
 
-  bool areAllEveningAthkarCompleted() {
-    return eveningAthkar
-        .every((athkar) => completedEveningAthkar.contains(athkar['text']));
+  bool isCategoryCompleted(String categoryName, List<AzkarItem> items) {
+    return items
+        .every((item) => isAzkarCompleted(categoryName, item.id, item.count));
+  }
+
+  double getCategoryProgress(String categoryName, List<AzkarItem> items) {
+    if (items.isEmpty) return 0.0;
+
+    int completedCount = 0;
+    for (final item in items) {
+      if (isAzkarCompleted(categoryName, item.id, item.count)) {
+        completedCount++;
+      }
+    }
+
+    return completedCount / items.length;
   }
 }
 
-class AthkarView extends GetView<AthkarController> {
-  const AthkarView({super.key});
+// Improved View
+class AzkarView extends GetView<AzkarController> {
+  const AzkarView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final settingsController = Get.put(SettingsController());
-    final athkarController = Get.put(AthkarController());
+    Get.put(AzkarController());
 
-    return Obx(() {
-      final isDarkMode = settingsController.isDarkMode.value;
-      return DefaultTabController(
-        length: 3,
-        child: Scaffold(
-          appBar: AppBar(
-            title: const Text(
-              'الأذكار والتسبيح',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: "BahijTheSansArabic",
-              ),
-            ),
-            centerTitle: true,
-            bottom: TabBar(
-              labelStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontFamily: "BahijTheSansArabic",
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontWeight: FontWeight.normal,
-                fontFamily: "BahijTheSansArabic",
-              ),
-              indicatorColor: Colors.teal[700],
-              indicatorWeight: 3,
-              indicatorPadding: const EdgeInsets.symmetric(horizontal: 16),
-              labelColor: Get.isDarkMode ? Colors.teal[300] : Colors.teal[700],
-              unselectedLabelColor:
-                  Get.isDarkMode ? Colors.grey[400] : Colors.grey[600],
-              tabs: const [
-                Tab(text: 'المسبحة'),
-                Tab(text: 'أذكار الصباح'),
-                Tab(text: 'أذكار المساء'),
-              ],
-            ),
-          ),
-          body: TabBarView(
-            children: [
-              _buildTasbihView(context, isDarkMode),
-              _buildMorningAthkarView(context, isDarkMode),
-              _buildEveningAthkarView(context, isDarkMode),
-            ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'الأذكار والتسبيح',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontFamily: "BahijTheSansArabic",
           ),
         ),
-      );
-    });
+        centerTitle: true,
+      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        return DefaultTabController(
+          length: 4,
+          child: Column(
+            children: [
+              const TabBar(
+                isScrollable: true,
+                labelStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontFamily: "BahijTheSansArabic",
+                ),
+                unselectedLabelStyle: TextStyle(
+                  fontWeight: FontWeight.normal,
+                  fontFamily: "BahijTheSansArabic",
+                ),
+                tabs: [
+                  Tab(text: 'المسبحة'),
+                  Tab(text: 'جميع الأذكار'),
+                  Tab(text: 'أذكار الصباح'),
+                  Tab(text: 'أذكار المساء'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildTasbihView(context),
+                    _buildAllAzkarView(context),
+                    _buildAzkarCategoryView(
+                        context, controller.morningAzkar, 'morning'),
+                    _buildAzkarCategoryView(
+                        context, controller.eveningAzkar, 'evening'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
+    );
   }
 
-  Widget _buildTasbihView(BuildContext context, bool isDarkMode) {
+  Widget _buildTasbihView(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Obx(() => Text(
-                '${controller.tasbihCount}',
+                '${controller.tasbihCount.value}',
                 style: TextStyle(
                   fontSize: MediaQuery.of(context).size.width * 0.15,
                   fontWeight: FontWeight.bold,
                   fontFamily: "BahijTheSansArabic",
-                  color: isDarkMode ? Colors.white : Colors.black87,
                 ),
               )),
           const SizedBox(height: 20),
@@ -294,17 +270,16 @@ class AthkarView extends GetView<AthkarController> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(
-                  colors: isDarkMode
-                      ? [Colors.teal[900]!, Colors.teal[600]!]
-                      : [Colors.teal[700]!, Colors.teal[500]!],
+                  colors: [
+                    Get.theme.colorScheme.primary,
+                    Get.theme.colorScheme.primaryContainer,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: isDarkMode
-                        ? Colors.teal.withOpacity(0.4)
-                        : Colors.teal.withOpacity(0.3),
+                    color: Get.theme.colorScheme.primary.withOpacity(0.3),
                     blurRadius: 15,
                     spreadRadius: 5,
                   ),
@@ -320,11 +295,10 @@ class AthkarView extends GetView<AthkarController> {
           const SizedBox(height: 20),
           TextButton(
             onPressed: controller.resetTasbih,
-            child: Text(
+            child: const Text(
               'إعادة تعيين',
               style: TextStyle(
                 fontFamily: "BahijTheSansArabic",
-                color: isDarkMode ? Colors.teal[400] : Colors.teal[700],
               ),
             ),
           ),
@@ -333,216 +307,375 @@ class AthkarView extends GetView<AthkarController> {
     );
   }
 
-  Widget _buildMorningAthkarView(BuildContext context, bool isDarkMode) {
+  Widget _buildAllAzkarView(BuildContext context) {
     return Obx(() {
-      if (controller.areAllMorningAthkarCompleted() &&
-          controller.lastCompletionDate.value ==
-              DateTime.now().toIso8601String().substring(0, 10)) {
-        return Center(
+      if (controller.allCategories.isEmpty) {
+        return const Center(
           child: Text(
-            'غير وقت الأذكار الآن',
-            style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                // color: isDarkMode ? Colors.teal[400] : Colors.white,
-                ),
-            textDirection: TextDirection.rtl,
+            'لا توجد أذكار متاحة',
+            style: TextStyle(
+              fontFamily: "BahijTheSansArabic",
+              fontSize: 16,
+            ),
           ),
         );
       }
+
       return ListView.builder(
-        itemCount: controller.morningAthkar.length,
         padding: const EdgeInsets.all(16),
-        itemBuilder: (context, index) {
-          final athkar = controller.morningAthkar[index];
-          return _buildAthkarCard(
-            context,
-            athkar['text'],
-            athkar['count'],
-            athkar['reward'],
-            true,
-            isDarkMode,
+        itemCount: controller.allCategories.length,
+        itemBuilder: (context, categoryIndex) {
+          final category = controller.allCategories[categoryIndex];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            elevation: 2,
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.all(16),
+              childrenPadding: const EdgeInsets.symmetric(horizontal: 8),
+              title: Text(
+                category.category,
+                style: const TextStyle(
+                  fontFamily: "BahijTheSansArabic",
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 8),
+                  Text(
+                    '${category.array.length} أذكار',
+                    style: TextStyle(
+                      fontFamily: "BahijTheSansArabic",
+                      color: Get.theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Obx(() {
+                    final progress = controller.getCategoryProgress(
+                        category.category, category.array);
+                    final completedCount =
+                        (progress * category.array.length).round();
+                    return Column(
+                      children: [
+                        LinearProgressIndicator(
+                          value: progress,
+                          backgroundColor: Get.theme.colorScheme.surfaceVariant,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            progress == 1.0
+                                ? Colors.green
+                                : Get.theme.colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'مكتمل: $completedCount/${category.array.length}',
+                              style: TextStyle(
+                                fontFamily: "BahijTheSansArabic",
+                                fontSize: 11,
+                                color: Get.theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            Text(
+                              '${(progress * 100).toInt()}%',
+                              style: TextStyle(
+                                fontFamily: "BahijTheSansArabic",
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: progress == 1.0
+                                    ? Colors.green
+                                    : Get.theme.colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+              children: category.array.map((azkarItem) {
+                return _buildAzkarItemCard(
+                    context, azkarItem, category.category);
+              }).toList(),
+            ),
           );
         },
       );
     });
   }
 
-  Widget _buildEveningAthkarView(BuildContext context, bool isDarkMode) {
-    return Obx(() {
-      if (controller.areAllEveningAthkarCompleted() &&
-          controller.lastCompletionDate.value ==
-              DateTime.now().toIso8601String().substring(0, 10)) {
-        return Center(
-          child: Text(
-            'غير وقت الأذكار الآن',
-            style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                // color: isDarkMode ? Colors.teal[400] : Colors.teal[700],
+  Widget _buildAzkarCategoryView(
+      BuildContext context, List<AzkarCategory> categories, String type) {
+    if (categories.isEmpty) {
+      return const Center(
+        child: Text(
+          'لا توجد أذكار متاحة',
+          style: TextStyle(
+            fontFamily: "BahijTheSansArabic",
+            fontSize: 16,
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: categories.length,
+      itemBuilder: (context, categoryIndex) {
+        final category = categories[categoryIndex];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: ExpansionTile(
+            title: Text(
+              category.category,
+              style: const TextStyle(
+                fontFamily: "BahijTheSansArabic",
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            subtitle: Obx(() {
+              final progress = controller.getCategoryProgress(
+                  category.category, category.array);
+              return LinearProgressIndicator(
+                value: progress,
+                backgroundColor: Get.theme.colorScheme.surfaceVariant,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Get.theme.colorScheme.primary,
                 ),
-            textDirection: TextDirection.rtl,
+              );
+            }),
+            children: category.array.map((azkarItem) {
+              return _buildAzkarItemCard(context, azkarItem, category.category);
+            }).toList(),
           ),
         );
-      }
-      return ListView.builder(
-        itemCount: controller.eveningAthkar.length,
-        padding: const EdgeInsets.all(16),
-        itemBuilder: (context, index) {
-          final athkar = controller.eveningAthkar[index];
-          return _buildAthkarCard(
-            context,
-            athkar['text'],
-            athkar['count'],
-            athkar['reward'],
-            false,
-            isDarkMode,
-          );
-        },
-      );
-    });
+      },
+    );
   }
 
-  Widget _buildAthkarCard(
-    BuildContext context,
-    String text,
-    int count,
-    String reward,
-    bool isMorning,
-    bool isDarkMode,
-  ) {
-    final RxInt currentCount = 0.obs;
+  Widget _buildAzkarItemCard(
+      BuildContext context, AzkarItem item, String categoryName) {
     return Obx(() {
-      final completedList = isMorning
-          ? controller.completedMorningAthkar
-          : controller.completedEveningAthkar;
+      final currentCount = controller.getAzkarProgress(categoryName, item.id);
       final isCompleted =
-          completedList.contains(text) || currentCount.value >= count;
+          controller.isAzkarCompleted(categoryName, item.id, item.count);
+      final progressPercentage =
+          ((currentCount / item.count) * 100).clamp(0, 100).toInt();
+
       return Card(
-        margin: const EdgeInsets.only(bottom: 16),
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        elevation: isCompleted ? 3 : 1,
+        color: isCompleted ? Colors.green.withOpacity(0.05) : null,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                text,
-                style: Theme.of(context).textTheme.headlineMedium,
-                textDirection: TextDirection.rtl,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'عدد التكرار المطلوب: $count',
-                style: Theme.of(context).textTheme.bodySmall,
-                textDirection: TextDirection.rtl,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'الفضل: $reward',
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      fontStyle: FontStyle.italic,
-                      color: isDarkMode ? Colors.teal[400] : Colors.teal[700],
-                    ),
-                textDirection: TextDirection.rtl,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'عدد التكرارات الحالية: ${currentCount.value}',
-                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isCompleted
-                          ? (isDarkMode ? Colors.green[300] : Colors.green[700])
-                          : (isDarkMode ? Colors.red[300] : Colors.red[700]),
-                    ),
-                textDirection: TextDirection.rtl,
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Increment Button
-                    AnimatedScale(
-                      scale: isCompleted ? 0.95 : 1.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: ElevatedButton(
-                        onPressed: isCompleted
-                            ? null
-                            : () {
-                                currentCount.value++;
-                                if (currentCount.value >= count) {
-                                  controller.markAthkarCompleted(
-                                      text, isMorning);
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isCompleted
-                              ? Colors.grey[600]
-                              : (Get.isDarkMode
-                                  ? Colors.teal[700]
-                                  : Colors.teal[600]),
-                          disabledBackgroundColor: Colors.grey[600],
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 2,
-                          shadowColor: Get.isDarkMode
-                              ? Colors.teal[800]?.withOpacity(0.5)
-                              : Colors.teal[100],
-                        ),
-                        child: Text(
-                          isCompleted ? 'تم الإكمال' : 'اضغط لزيادة العدد',
-                          style: TextStyle(
-                            color:
-                                isCompleted ? Colors.grey[300] : Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
+              // Azkar text with RTL direction
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Get.theme.colorScheme.surfaceVariant.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  item.text,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontFamily: "BahijTheSansArabic",
+                        height: 1.6,
+                        fontSize: 16,
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Decrement Button (only shown when not completed)
-                    if (!isCompleted)
-                      AnimatedScale(
-                        scale: currentCount.value > 0 ? 1.0 : 0.95,
-                        duration: const Duration(milliseconds: 200),
-                        child: Opacity(
-                          opacity: currentCount.value > 0 ? 1.0 : 0.7,
-                          child: ElevatedButton(
-                            onPressed: currentCount.value > 0
-                                ? () {
-                                    currentCount.value--;
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Get.isDarkMode
-                                  ? Colors.red[400]
-                                  : Colors.red[500],
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 2,
-                              shadowColor: Get.isDarkMode
-                                  ? Colors.red[800]?.withOpacity(0.5)
-                                  : Colors.red[100],
-                            ),
-                            child: Text(
-                              'إنقاص العدد',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+                  textDirection: TextDirection.rtl,
                 ),
               ),
+
+              const SizedBox(height: 16),
+
+              // Progress information row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'العدد المطلوب: ${item.count}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontFamily: "BahijTheSansArabic",
+                            ),
+                      ),
+                      Text(
+                        'المنجز: $currentCount',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontFamily: "BahijTheSansArabic",
+                              color: isCompleted ? Colors.green : Colors.orange,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: isCompleted
+                          ? Colors.green
+                          : Get.theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      isCompleted ? 'مكتمل ✓' : '$progressPercentage%',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: "BahijTheSansArabic",
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 12),
+
+              // Progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: currentCount / item.count,
+                  minHeight: 8,
+                  backgroundColor: Get.theme.colorScheme.surfaceVariant,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isCompleted ? Colors.green : Get.theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Increment button
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: isCompleted
+                          ? null
+                          : () {
+                              controller.incrementAzkarProgress(
+                                  categoryName, item.id, item.count);
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isCompleted
+                            ? Colors.green
+                            : Get.theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        disabledBackgroundColor: Colors.grey.withOpacity(0.3),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      icon: Icon(
+                        isCompleted ? Icons.check : Icons.add,
+                        size: 20,
+                      ),
+                      label: Text(
+                        isCompleted ? 'مكتمل' : 'تسبيحة',
+                        style: const TextStyle(
+                          fontFamily: "BahijTheSansArabic",
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Decrement button (only show if not completed and has progress)
+                  if (!isCompleted && currentCount > 0)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          controller.decrementAzkarProgress(
+                              categoryName, item.id);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.red,
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.remove, size: 20),
+                        label: const Text(
+                          'إنقاص',
+                          style: TextStyle(
+                            fontFamily: "BahijTheSansArabic",
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // Reset button for completed items
+                  if (isCompleted)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          // Reset this specific azkar
+                          controller.azkarProgress[categoryName]?[item.id] = 0;
+                          controller.saveProgress();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.orange,
+                          side: const BorderSide(color: Colors.orange),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        icon: const Icon(Icons.refresh, size: 20),
+                        label: const Text(
+                          'إعادة',
+                          style: TextStyle(
+                            fontFamily: "BahijTheSansArabic",
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              if (item.audio != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Get.snackbar(
+                        'الصوت',
+                        'ميزة الصوت ستكون متاحة قريباً',
+                        backgroundColor: Get.theme.colorScheme.surfaceVariant,
+                        colorText: Get.theme.colorScheme.onSurfaceVariant,
+                      );
+                    },
+                    icon: const Icon(Icons.volume_up),
+                    label: const Text(
+                      'تشغيل الصوت',
+                      style: TextStyle(
+                        fontFamily: "BahijTheSansArabic",
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
