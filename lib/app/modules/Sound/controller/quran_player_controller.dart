@@ -1,10 +1,11 @@
+import 'dart:io';
+
 import 'package:quran_app/index.dart';
 
 
 class QuranPlayerController extends GetxController {
-  // Audio player instance
   late AudioPlayer audioPlayer;
-
+  
   // Observable states
   var isPlaying = false.obs;
   var isLoading = false.obs;
@@ -13,49 +14,33 @@ class QuranPlayerController extends GetxController {
   var currentPosition = Duration.zero.obs;
   var totalDuration = Rx<Duration?>(null);
   var currentSurah = 0.obs;
-  var currentSurahName = ''.obs; // Add this to store current surah name
-  var currentReaderId = 'abdulbasitmurattal'.obs; // Default reader
-  var currentQuality = '128'.obs; // Default quality
-  var isMiniPlayerVisible = false.obs; // Track mini player visibility
+  var currentSurahName = ''.obs;
+  var currentReaderId = 'abdulbasitmurattal'.obs;
+  var currentQuality = '128'.obs;
+  var isMiniPlayerVisible = false.obs;
 
-  // Timer for updating position
   Timer? _positionTimer;
 
-  // Readers list
   final List<QuranReader> availableReaders = [
-    QuranReader(
-        id: 'muhammadsiddiqalminshawimujawwad',
-        name: 'محمد صديق المنشاوي',
-        quality: '128'),
+    QuranReader(id: 'muhammadsiddiqalminshawimujawwad', name: 'محمد صديق المنشاوي', quality: '128'),
     QuranReader(id: 'alafasy', name: 'مشاري راشد العفاسي', quality: '128'),
     QuranReader(id: 'nasseralqatami', name: 'ناصر القطامي', quality: '128'),
-    QuranReader(
-        id: 'abdulazizazzahrani', name: 'عبدالعزيز الزهراني', quality: '128'),
+    QuranReader(id: 'abdulazizazzahrani', name: 'عبدالعزيز الزهراني', quality: '128'),
     QuranReader(id: 'yasseraldossari', name: 'ياسر الدوسري', quality: '128'),
-    QuranReader(
-        id: 'abdulbasitmurattal',
-        name: 'عبد الباسط عبد الصمد مرتل',
-        quality: '128'),
-    QuranReader(
-        id: 'abdulbasitmujawwad',
-        name: 'عبد الباسط عبد الصمد مجود',
-        quality: '128'),
+    QuranReader(id: 'abdulbasitmurattal', name: 'عبد الباسط عبد الصمد مرتل', quality: '128'),
+    QuranReader(id: 'abdulbasitmujawwad', name: 'عبد الباسط عبد الصمد مجود', quality: '128'),
     QuranReader(id: 'ahmedalajmi', name: 'أحمد العجمي', quality: '128'),
   ];
 
-  // Getter for current reader
   QuranReader? get currentReader {
     try {
       return availableReaders.firstWhere((reader) =>
           reader.id == currentReaderId.value &&
           reader.quality == currentQuality.value);
     } catch (e) {
-      // If exact match not found, try to find with just ID
       try {
-        return availableReaders
-            .firstWhere((reader) => reader.id == currentReaderId.value);
+        return availableReaders.firstWhere((reader) => reader.id == currentReaderId.value);
       } catch (e) {
-        // If nothing found, return first available reader
         return availableReaders.isNotEmpty ? availableReaders.first : null;
       }
     }
@@ -64,20 +49,23 @@ class QuranPlayerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    audioPlayer = AudioPlayer();
+    _initializeAudioPlayer();
+  }
 
-    // Set up listeners that are safe from setState after dispose errors
-    _setupSafeListeners();
-
-    // REMOVED THE LINE THAT CAUSES STACK OVERFLOW:
-    // Get.put(this, permanent: true);
-    // This was creating a recursive initialization loop
+  void _initializeAudioPlayer() {
+    try {
+      audioPlayer = AudioPlayer();
+      _setupSafeListeners();
+    } catch (e) {
+      print('Error initializing audio player: $e');
+      hasError.value = true;
+      errorMessage.value = 'خطأ في تهيئة مشغل الصوت';
+    }
   }
 
   void _setupSafeListeners() {
-    // Set up listeners with safety checks
     audioPlayer.playerStateStream.listen((state) {
-      if (isClosed) return; // Skip if controller is already disposed
+      if (isClosed) return;
 
       isPlaying.value = state.playing;
 
@@ -85,6 +73,7 @@ class QuranPlayerController extends GetxController {
         case ProcessingState.loading:
         case ProcessingState.buffering:
           isLoading.value = true;
+          hasError.value = false;
           break;
         case ProcessingState.ready:
           isLoading.value = false;
@@ -102,7 +91,6 @@ class QuranPlayerController extends GetxController {
       _handlePlaybackError(e);
     });
 
-    // Duration listener
     audioPlayer.durationStream.listen((d) {
       if (isClosed) return;
       totalDuration.value = d;
@@ -111,8 +99,6 @@ class QuranPlayerController extends GetxController {
       _handlePlaybackError(e);
     });
 
-    // Start position timer instead of using positions stream
-    // This reduces the number of active streams
     _startPositionTimer();
   }
 
@@ -123,30 +109,37 @@ class QuranPlayerController extends GetxController {
         try {
           currentPosition.value = audioPlayer.position;
         } catch (e) {
-          // Ignore position errors
+          // Ignore position errors in release builds
         }
       }
     });
   }
 
-  // Check if network connection is available
   Future<bool> _checkConnection() async {
     try {
       final connectivityResult = await Connectivity().checkConnectivity();
-      return connectivityResult != ConnectivityResult.none;
+      if (connectivityResult == ConnectivityResult.none) {
+        return false;
+      }
+      
+      // Additional check: Try to resolve the domain
+      try {
+        final result = await InternetAddress.lookup('cdn.islamic.network');
+        return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+      } catch (e) {
+        print('DNS lookup failed: $e');
+        return false;
+      }
     } on MissingPluginException {
-      // Plugin not available, assume connection exists
       return true;
     } catch (e) {
-      // On any error, assume connection exists
-      return true;
+      print('Connection check error: $e');
+      return false;
     }
   }
 
-  // Play a specific surah
   Future<void> playSurah(int surahNumber, {String? surahName}) async {
     try {
-      // Reset states
       currentSurah.value = surahNumber;
       if (surahName != null) {
         currentSurahName.value = surahName;
@@ -155,40 +148,39 @@ class QuranPlayerController extends GetxController {
       errorMessage.value = '';
       hasError.value = false;
 
-      // Show mini player when playing a surah
       isMiniPlayerVisible.value = true;
 
-      // Check network connection
+      // Enhanced network check
       bool hasNetwork = await _checkConnection();
       if (!hasNetwork) {
-        errorMessage.value = 'تحقق من اتصال الإنترنت';
+        errorMessage.value = 'لا يوجد اتصال بالإنترنت. تأكد من الاتصال وحاول مرة أخرى.';
         hasError.value = true;
         isLoading.value = false;
         return;
       }
 
-      // Construct the URL based on reader and quality
-      String audioUrl = 'https://cdn.islamic.network/quran/audio-surah/';
-      if (currentReaderId.value.isNotEmpty) {
-        audioUrl +=
-            '${currentQuality}/ar.${currentReaderId.value}/${surahNumber}.mp3';
-        print(audioUrl);
-      } else {
-        audioUrl += 'lafasy/${surahNumber}.mp3';
-      }
+      // Use HTTPS URL for better security
+      String audioUrl = 'https://cdn.islamic.network/quran/audio-surah/${currentQuality.value}/ar.${currentReaderId.value}/$surahNumber.mp3';
+      print('Playing audio from: $audioUrl');
 
-      // Stop any current playback
       await audioPlayer.stop();
 
-      // Set the audio source with proper error handling
+      // Set audio source with timeout and better error handling
       try {
-        await audioPlayer.setUrl(audioUrl);
+        await audioPlayer.setUrl(audioUrl).timeout(
+          const Duration(seconds: 30),
+          onTimeout: () {
+            throw TimeoutException('Audio loading timeout', const Duration(seconds: 30));
+          },
+        );
         await audioPlayer.play();
       } catch (e) {
+        print('Audio loading error: $e');
         _handlePlaybackError(e);
         return;
       }
     } catch (e) {
+      print('Play surah error: $e');
       _handlePlaybackError(e);
     } finally {
       isLoading.value = false;
@@ -201,22 +193,33 @@ class QuranPlayerController extends GetxController {
     hasError.value = true;
     isLoading.value = false;
 
-    // Determine appropriate error message
-    if (error.toString().contains('Connection refused') ||
-        error.toString().contains('SocketException')) {
+    String errorStr = error.toString().toLowerCase();
+    
+    if (errorStr.contains('timeout') || errorStr.contains('timeoutexception')) {
+      errorMessage.value = 'انتهت مهلة التحميل. تحقق من اتصال الإنترنت وحاول مرة أخرى.';
+    } else if (errorStr.contains('connection refused') || 
+               errorStr.contains('socketexception') ||
+               errorStr.contains('network')) {
       errorMessage.value = 'تعذر الاتصال بالخادم. تحقق من اتصال الإنترنت.';
-    } else if (error.toString().contains('404') ||
-        error.toString().contains('Not Found')) {
-      errorMessage.value = 'لم يتم العثور على الملف الصوتي.';
+    } else if (errorStr.contains('404') || errorStr.contains('not found')) {
+      errorMessage.value = 'لم يتم العثور على الملف الصوتي. جرب قارئ آخر.';
+    } else if (errorStr.contains('403') || errorStr.contains('forbidden')) {
+      errorMessage.value = 'غير مسموح بالوصول للملف الصوتي.';
+    } else if (errorStr.contains('500') || errorStr.contains('server')) {
+      errorMessage.value = 'خطأ في الخادم. حاول مرة أخرى لاحقاً.';
     } else {
-      errorMessage.value = 'حدث خطأ أثناء تشغيل الصوت.';
+      errorMessage.value = 'حدث خطأ أثناء تشغيل الصوت. حاول مرة أخرى.';
     }
 
-    print('خطأ أثناء تشغيل الصوت: ${error.toString()}');
+    print('Audio error: $error');
   }
 
-  // Toggle play/pause
   void togglePlayPause() async {
+    if (hasError.value) {
+      await retryPlaying();
+      return;
+    }
+
     try {
       if (audioPlayer.playing) {
         await audioPlayer.pause();
@@ -228,59 +231,52 @@ class QuranPlayerController extends GetxController {
     }
   }
 
-  // Seek to a specific position
   void seek(Duration position) async {
     try {
       await audioPlayer.seek(position);
-      currentPosition.value = position; // Update UI immediately
+      currentPosition.value = position;
     } catch (e) {
-      // Ignore seek errors as they're usually not critical
-      print('خطأ أثناء تغيير موضع التشغيل: ${e.toString()}');
+      print('Seek error: $e');
     }
   }
 
-  // Stop playback
   void stopPlayer() async {
     try {
       await audioPlayer.stop();
       currentPosition.value = Duration.zero;
-      currentSurah.value = 0; // Reset surah to hide mini player
+      currentSurah.value = 0;
       isMiniPlayerVisible.value = false;
+      hasError.value = false;
+      errorMessage.value = '';
     } catch (e) {
-      print('خطأ أثناء إيقاف التشغيل: ${e.toString()}');
+      print('Stop player error: $e');
     }
   }
 
-  // Retry playing after an error
-  void retryPlaying() async {
-    // Reset error state
+  Future<void> retryPlaying() async {
     hasError.value = false;
     errorMessage.value = '';
 
-    // Replay current surah
     if (currentSurah.value > 0) {
-      await playSurah(currentSurah.value);
+      await playSurah(currentSurah.value, surahName: currentSurahName.value);
     }
   }
 
-  // Change reader
   void changeReader(String readerId, String quality) async {
     if (currentReaderId.value == readerId && currentQuality.value == quality) {
-      return; // No change needed
+      return;
     }
 
     currentReaderId.value = readerId;
     currentQuality.value = quality;
 
-    // If a surah is currently playing, restart it with the new reader
     if (currentSurah.value > 0) {
-      await playSurah(currentSurah.value);
+      await playSurah(currentSurah.value, surahName: currentSurahName.value);
     }
   }
 
   @override
   void onClose() {
-    // Clean up resources
     _positionTimer?.cancel();
     _positionTimer = null;
 
@@ -288,7 +284,7 @@ class QuranPlayerController extends GetxController {
       audioPlayer.stop();
       audioPlayer.dispose();
     } catch (e) {
-      print('خطأ أثناء إغلاق مشغل الصوت: ${e.toString()}');
+      print('Audio player dispose error: $e');
     }
 
     super.onClose();

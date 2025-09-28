@@ -235,7 +235,7 @@ class NotificationService {
       color: color,
       // sound: sound.isNotEmpty ? RawResourceAndroidNotificationSound(sound) : null,
       styleInformation: const BigTextStyleInformation(''),
-      icon: '@mipmap/ic_launcher',
+      icon: 'assets/image.png',
       ongoing: false,
       autoCancel: true,
       showWhen: true,

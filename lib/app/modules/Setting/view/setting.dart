@@ -5,8 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../utils/const/app_theme.dart';
 import '../controller/setting_controller.dart';
 
-
-
 class SettingsScreen extends StatelessWidget {
   final SettingsController controller = Get.put(SettingsController());
 
@@ -223,7 +221,7 @@ class SettingsScreen extends StatelessWidget {
   Widget _buildArabicFontSelector() {
     return GetX<SettingsController>(
         builder: (controller) => ListTile(
-              leading: Icon(
+              leading: const Icon(
                 Icons.font_download,
                 color: AppColor.primaryColor,
               ),
@@ -332,12 +330,17 @@ class SettingsScreen extends StatelessWidget {
   }
 
   // Helper methods
-
   void _launchLinkedIn(BuildContext context) async {
-    const linkedInUrl = 'https://www.linkedin.com/in/mohamed-salah-9804a2247/';
-    if (await canLaunch(linkedInUrl)) {
-      await launch(linkedInUrl);
-    } else {
+    final Uri linkedInUrl =
+        Uri.parse('https://www.linkedin.com/in/mohamed-salah-9804a2247');
+
+    try {
+      await launchUrl(
+        linkedInUrl,
+        mode:
+            LaunchMode.externalApplication,
+      );
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('تعذر فتح الرابط'),
@@ -356,4 +359,3 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 }
-
