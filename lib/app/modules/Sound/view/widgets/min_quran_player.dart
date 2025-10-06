@@ -1,18 +1,13 @@
 import 'package:quran_app/index.dart';
 
-
-
-
 class MiniQuranPlayer extends StatelessWidget {
   const MiniQuranPlayer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Get the controller instance that's already been created
     final QuranPlayerController controller = Get.find<QuranPlayerController>();
     final isDarkMode = Get.find<SettingsController>();
 
-    // Only show when audio is initialized
     return Obx(() {
       if (controller.currentSurah.value <= 0) {
         return const SizedBox.shrink();
@@ -21,9 +16,9 @@ class MiniQuranPlayer extends StatelessWidget {
       return Container(
         height: 60,
         decoration: BoxDecoration(
-          color: isDarkMode.isDarkMode.value
-              ? Colors.grey.shade900
-              : Colors.white,
+          borderRadius: BorderRadius.circular(11),
+          color:
+              isDarkMode.isDarkMode.value ? Colors.grey.shade900 : Colors.white,
           boxShadow: [
             BoxShadow(
               color: isDarkMode.isDarkMode.value
@@ -45,7 +40,6 @@ class MiniQuranPlayer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
               children: [
-                // Player status icon
                 Obx(() {
                   return Container(
                     width: 36,
@@ -60,7 +54,7 @@ class MiniQuranPlayer extends StatelessWidget {
                     ),
                     child: Center(
                       child: controller.hasError.value
-                          ? Icon(Icons.error_outline,
+                          ? const Icon(Icons.error_outline,
                               color: Colors.red, size: 20)
                           : controller.isLoading.value
                               ? SizedBox(
@@ -85,20 +79,17 @@ class MiniQuranPlayer extends StatelessWidget {
                     ),
                   );
                 }),
-
                 const SizedBox(width: 12),
-
-                // Surah info
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Obx(() => Text(
-                            controller.currentSurahName.value,
+                            getSurahNameArabic(controller.currentSurah.value),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 16,
                               color: isDarkMode.isDarkMode.value
                                   ? Colors.white
                                   : Colors.black87,
@@ -121,8 +112,6 @@ class MiniQuranPlayer extends StatelessWidget {
                     ],
                   ),
                 ),
-
-                // Play/Pause button
                 IconButton(
                   onPressed: controller.togglePlayPause,
                   icon: Obx(() => Icon(
@@ -134,8 +123,6 @@ class MiniQuranPlayer extends StatelessWidget {
                             : Colors.teal.shade700,
                       )),
                 ),
-
-                // Close button
                 IconButton(
                   onPressed: () {
                     controller.stopPlayer();

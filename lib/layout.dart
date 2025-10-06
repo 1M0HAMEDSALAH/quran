@@ -18,7 +18,7 @@ class AppLayout extends StatelessWidget {
           const Positioned(
             left: 0,
             right: 0,
-            bottom: 55,
+            bottom: 60,
             child: Padding(
               padding: EdgeInsets.all(10.0),
               child: MiniQuranPlayer(),

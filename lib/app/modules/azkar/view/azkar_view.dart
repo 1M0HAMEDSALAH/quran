@@ -5,7 +5,7 @@ class AzkarController extends GetxController {
   final RxInt tasbihCount = 0.obs;
   final RxInt dailyTargetCount = 100.obs;
 
-  // Azkar progress tracking
+  // Azkar progress tracking - FIXED: Made it properly reactive
   final RxMap<String, Map<int, int>> azkarProgress =
       <String, Map<int, int>>{}.obs;
   final RxString lastCompletionDate = ''.obs;
@@ -123,20 +123,30 @@ class AzkarController extends GetxController {
     saveProgress();
   }
 
-  // Azkar progress methods
+  // FIXED: Azkar progress methods - Trigger reactive updates properly
   int getAzkarProgress(String categoryName, int azkarId) {
     return azkarProgress[categoryName]?[azkarId] ?? 0;
   }
 
   void incrementAzkarProgress(
       String categoryName, int azkarId, int requiredCount) {
-    if (!azkarProgress.containsKey(categoryName)) {
-      azkarProgress[categoryName] = {};
+    // Create completely new nested maps to trigger reactive update
+    final updatedProgress = Map<String, Map<int, int>>.from(azkarProgress);
+
+    if (!updatedProgress.containsKey(categoryName)) {
+      updatedProgress[categoryName] = {};
+    } else {
+      // Create a new nested map
+      updatedProgress[categoryName] =
+          Map<int, int>.from(updatedProgress[categoryName]!);
     }
 
-    final currentCount = azkarProgress[categoryName]![azkarId] ?? 0;
+    final currentCount = updatedProgress[categoryName]![azkarId] ?? 0;
     if (currentCount < requiredCount) {
-      azkarProgress[categoryName]![azkarId] = currentCount + 1;
+      updatedProgress[categoryName]![azkarId] = currentCount + 1;
+
+      // CRITICAL: Assign the new map to trigger reactive update
+      azkarProgress.value = updatedProgress;
 
       if (currentCount + 1 >= requiredCount) {
         Get.snackbar(
@@ -154,7 +164,33 @@ class AzkarController extends GetxController {
   void decrementAzkarProgress(String categoryName, int azkarId) {
     final currentCount = azkarProgress[categoryName]?[azkarId] ?? 0;
     if (currentCount > 0) {
-      azkarProgress[categoryName]![azkarId] = currentCount - 1;
+      // Create completely new nested maps to trigger reactive update
+      final updatedProgress = Map<String, Map<int, int>>.from(azkarProgress);
+
+      if (updatedProgress.containsKey(categoryName)) {
+        // Create a new nested map
+        updatedProgress[categoryName] =
+            Map<int, int>.from(updatedProgress[categoryName]!);
+        updatedProgress[categoryName]![azkarId] = currentCount - 1;
+        // CRITICAL: Assign the new map to trigger reactive update
+        azkarProgress.value = updatedProgress;
+      }
+
+      saveProgress();
+    }
+  }
+
+  void resetAzkarItem(String categoryName, int azkarId) {
+    // Create a new map to trigger reactive update
+    final updatedProgress = Map<String, Map<int, int>>.from(azkarProgress);
+
+    if (updatedProgress.containsKey(categoryName)) {
+      // Create a new nested map as well
+      updatedProgress[categoryName] =
+          Map<int, int>.from(updatedProgress[categoryName]!);
+      updatedProgress[categoryName]![azkarId] = 0;
+      // CRITICAL: Assign the new map to trigger reactive update
+      azkarProgress.value = updatedProgress;
       saveProgress();
     }
   }
@@ -182,7 +218,6 @@ class AzkarController extends GetxController {
   }
 }
 
-// Improved View
 class AzkarView extends GetView<AzkarController> {
   const AzkarView({super.key});
 
@@ -249,56 +284,435 @@ class AzkarView extends GetView<AzkarController> {
   }
 
   Widget _buildTasbihView(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Obx(() => Text(
-                '${controller.tasbihCount.value}',
-                style: TextStyle(
-                  fontSize: MediaQuery.of(context).size.width * 0.15,
-                  fontWeight: FontWeight.bold,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Get.theme.colorScheme.surface,
+            Get.theme.colorScheme.primaryContainer.withOpacity(0.1),
+          ],
+        ),
+      ),
+      child: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Title
+                const Text(
+                  'المسبحة الإلكترونية',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    fontFamily: "BahijTheSansArabic",
+                  ),
+                ),
+                const SizedBox(height: 40),
+
+                // Progress Ring with Counter
+                Obx(() {
+                  final progress = controller.tasbihCount.value /
+                      controller.dailyTargetCount.value;
+
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Progress Ring
+                      SizedBox(
+                        width: 220,
+                        height: 220,
+                        child: CircularProgressIndicator(
+                          value: progress,
+                          strokeWidth: 12,
+                          backgroundColor: Get.theme.colorScheme.surfaceVariant,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            progress >= 1.0
+                                ? Colors.green
+                                : Get.theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                      // Counter Display
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${controller.tasbihCount.value}',
+                            style: TextStyle(
+                              fontSize:
+                                  MediaQuery.of(context).size.width * 0.15,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: "BahijTheSansArabic",
+                              color: progress >= 1.0
+                                  ? Colors.green
+                                  : Get.theme.colorScheme.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'من ${controller.dailyTargetCount.value}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontFamily: "BahijTheSansArabic",
+                              color: Get.theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                }),
+
+                const SizedBox(height: 40),
+
+                // Main Tasbih Button with Animation
+                Obx(() {
+                  final isCompleted = controller.tasbihCount.value >=
+                      controller.dailyTargetCount.value;
+
+                  return GestureDetector(
+                    onTap: controller.incrementTasbih,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 300),
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: 1.0 - (value * 0.05),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            width: 160,
+                            height: 160,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: isCompleted
+                                    ? [Colors.green, Colors.green.shade700]
+                                    : [
+                                        Get.theme.colorScheme.primary,
+                                        Get.theme.colorScheme.primaryContainer,
+                                      ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: (isCompleted
+                                          ? Colors.green
+                                          : Get.theme.colorScheme.primary)
+                                      .withOpacity(0.4),
+                                  blurRadius: 20,
+                                  spreadRadius: 5,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(80),
+                                onTap: controller.incrementTasbih,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        isCompleted
+                                            ? Icons.check_circle_outline
+                                            : Icons.touch_app,
+                                        size: 50,
+                                        color: Colors.white,
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        isCompleted ? 'مكتمل' : 'اضغط',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: "BahijTheSansArabic",
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                }),
+
+                const SizedBox(height: 40),
+
+                // Action Buttons Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Reset Button
+                    Obx(() {
+                      final hasProgress = controller.tasbihCount.value > 0;
+                      return AnimatedOpacity(
+                        opacity: hasProgress ? 1.0 : 0.5,
+                        duration: const Duration(milliseconds: 200),
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              hasProgress ? controller.resetTasbih : null,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.orange,
+                            side: BorderSide(
+                              color: hasProgress
+                                  ? Colors.orange
+                                  : Colors.grey.withOpacity(0.3),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.refresh, size: 20),
+                          label: const Text(
+                            'إعادة تعيين',
+                            style: TextStyle(
+                              fontFamily: "BahijTheSansArabic",
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+
+                    const SizedBox(width: 16),
+
+                    // Set Target Button
+                    OutlinedButton.icon(
+                      onPressed: () => _showTargetDialog(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Get.theme.colorScheme.primary,
+                        side: BorderSide(
+                          color: Get.theme.colorScheme.primary,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      icon: const Icon(Icons.flag_outlined, size: 20),
+                      label: const Text(
+                        'الهدف',
+                        style: TextStyle(
+                          fontFamily: "BahijTheSansArabic",
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                // Progress Stats Card
+                Obx(() {
+                  final percentage = ((controller.tasbihCount.value /
+                              controller.dailyTargetCount.value) *
+                          100)
+                      .clamp(0, 100)
+                      .toInt();
+                  final remaining = (controller.dailyTargetCount.value -
+                          controller.tasbihCount.value)
+                      .clamp(0, controller.dailyTargetCount.value);
+
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildStatItem(
+                                context,
+                                icon: Icons.percent,
+                                label: 'النسبة',
+                                value: '$percentage%',
+                                color: percentage >= 100
+                                    ? Colors.green
+                                    : Get.theme.colorScheme.primary,
+                              ),
+                              Container(
+                                width: 1,
+                                height: 40,
+                                color: Get.theme.colorScheme.outlineVariant,
+                              ),
+                              _buildStatItem(
+                                context,
+                                icon: Icons.trending_up,
+                                label: 'المتبقي',
+                                value: '$remaining',
+                                color: Get.theme.colorScheme.secondary,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatItem(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            fontFamily: "BahijTheSansArabic",
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontFamily: "BahijTheSansArabic",
+            color: Get.theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showTargetDialog(BuildContext context) {
+    final targetController = TextEditingController(
+      text: controller.dailyTargetCount.value.toString(),
+    );
+
+    Get.dialog(
+      AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          'تعيين الهدف اليومي',
+          style: TextStyle(
+            fontFamily: "BahijTheSansArabic",
+            fontWeight: FontWeight.bold,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: targetController,
+              keyboardType: TextInputType.number,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: "BahijTheSansArabic",
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: InputDecoration(
+                labelText: 'العدد المستهدف',
+                labelStyle: const TextStyle(
                   fontFamily: "BahijTheSansArabic",
                 ),
-              )),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: controller.incrementTasbih,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(30),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [
-                    Get.theme.colorScheme.primary,
-                    Get.theme.colorScheme.primaryContainer,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Get.theme.colorScheme.primary.withOpacity(0.3),
-                    blurRadius: 15,
-                    spreadRadius: 5,
-                  ),
-                ],
+                prefixIcon: const Icon(Icons.flag),
               ),
-              child: const Icon(
-                Icons.add,
-                size: 50,
-                color: Colors.white,
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              children: [33, 100, 200, 500, 1000].map((count) {
+                return ChoiceChip(
+                  label: Text(
+                    '$count',
+                    style: const TextStyle(
+                      fontFamily: "BahijTheSansArabic",
+                    ),
+                  ),
+                  selected: false,
+                  onSelected: (_) {
+                    targetController.text = count.toString();
+                  },
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'إلغاء',
+              style: TextStyle(
+                fontFamily: "BahijTheSansArabic",
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          TextButton(
-            onPressed: controller.resetTasbih,
+          ElevatedButton(
+            onPressed: () {
+              final newTarget = int.tryParse(targetController.text);
+              if (newTarget != null && newTarget > 0) {
+                controller.dailyTargetCount.value = newTarget;
+                controller.saveProgress();
+                Get.back();
+                Get.snackbar(
+                  'تم',
+                  'تم تحديث الهدف اليومي إلى $newTarget',
+                  backgroundColor:
+                      Get.theme.colorScheme.primary.withOpacity(0.1),
+                  colorText: Get.theme.colorScheme.primary,
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text(
-              'إعادة تعيين',
+              'حفظ',
               style: TextStyle(
                 fontFamily: "BahijTheSansArabic",
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),

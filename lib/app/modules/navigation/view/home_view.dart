@@ -1,6 +1,8 @@
 import 'package:quran_app/index.dart';
 
 class NavigationScreen extends GetView<NavigationController> {
+  NavigationScreen({super.key});
+
   final List<Widget> screens = [
     SurahListView(),
     SearchScreen(),
@@ -68,7 +70,7 @@ class IslamicNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+      margin: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
       decoration: BoxDecoration(
         color: isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(20),

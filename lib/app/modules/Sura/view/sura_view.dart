@@ -54,10 +54,18 @@ class SurahListView extends GetView<SurahListController> {
                     return AnimationConfiguration.staggeredGrid(
                       position: index,
                       columnCount: 2,
-                      child: ScaleAnimation(
-                        scale: 0.8,
-                        child: FadeInAnimation(
-                          child: _buildSurahCard(surahNumber),
+                      duration: const Duration(milliseconds: 100),
+                      delay: const Duration(milliseconds: 50),
+                      child: SlideAnimation(
+                        verticalOffset: 80.0,
+                        curve: Curves.easeOutCubic,
+                        child: ScaleAnimation(
+                          scale: 0.75,
+                          curve: Curves.easeOutBack,
+                          child: FadeInAnimation(
+                            curve: Curves.easeIn,
+                            child: _buildSurahCard(surahNumber),
+                          ),
                         ),
                       ),
                     );
