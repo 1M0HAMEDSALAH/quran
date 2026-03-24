@@ -2,7 +2,7 @@ name: quran_app
 description: "A new Flutter project."
 publish_to: "none"
 
-version: 1.1.4+6
+version: 1.2.1+10
 
 environment:
   sdk: ">=2.19.0 <3.0.0"
@@ -28,9 +28,13 @@ dependencies:
   connectivity_plus: ^6.1.4
   shared_preferences: ^2.5.3
   url_launcher: ^6.3.1
+  # flutter_qiblah: ^3.1.0+1
+  flutter_compass: ^0.8.1
+  geolocator: ^13.0.4
 
 
   intl: 
+  liquid_glass: ^0.0.2
   # assets_audio_player: ^3.1.1
 
 dev_dependencies:

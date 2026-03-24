@@ -4,7 +4,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 
-/// خدمة الإشعارات لتطبيق القرآن الكريم
+
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
@@ -99,7 +99,6 @@ class NotificationService {
       final location = tz.getLocation(_currentTimeZone);
       tz.setLocalLocation(location);
       
-      // التأكد من أن tz.local تم تهيئته بشكل صحيح
       final testTime = tz.TZDateTime.now(tz.local);
       debugPrint('🌐 Time zone set to $_currentTimeZone, current time: $testTime');
     } catch (e) {
@@ -146,16 +145,14 @@ class NotificationService {
     if (_permissionsGranted) return true;
 
     try {
-      // طلب الصلاحيات لـ iOS
       final ios = _notificationsPlugin.resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin>();
       final iosGranted = await ios?.requestPermissions(
-        alert: true, 
-        badge: true, 
+        alert: true,
+        badge: true,
         sound: true,
       );
 
-      // طلب الصلاحيات لـ Android
       final android = _notificationsPlugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       final androidGranted = await android?.requestNotificationsPermission();
@@ -203,7 +200,6 @@ class NotificationService {
   /// معالج النقر على الإشعار في المقدمة
   void _onNotificationTapped(NotificationResponse response) {
     debugPrint('👆 Notification tapped: ${response.id}');
-    // Navigate or handle the notification tap if needed
     _handleNotificationAction(response);
   }
 
@@ -211,13 +207,11 @@ class NotificationService {
   @pragma('vm:entry-point')
   static void _onBackgroundNotificationTapped(NotificationResponse response) {
     debugPrint('👆 Background notification tapped: ${response.id}');
-    // Handle background notification tap
   }
 
   /// معالجة إجراءات الإشعارات
   void _handleNotificationAction(NotificationResponse response) {
     // يمكنك إضافة منطق التنقل هنا
-    // مثال: التوجه إلى صفحة القرآن
   }
 
   NotificationDetails _createNotificationDetails({
@@ -233,7 +227,6 @@ class NotificationService {
       priority: Priority.high,
       enableVibration: enableVibration,
       color: color,
-      // sound: sound.isNotEmpty ? RawResourceAndroidNotificationSound(sound) : null,
       styleInformation: const BigTextStyleInformation(''),
       icon: 'assets/image.png',
       ongoing: false,
@@ -259,48 +252,51 @@ class NotificationService {
       return;
     }
 
-    // التأكد من أن tz.local مهيأ بشكل صحيح
-    try {
-      final testTime = tz.TZDateTime.now(tz.local);
-      debugPrint('✅ Time zone check passed: $testTime');
-    } catch (e) {
-      debugPrint('⚠️ Time zone not properly initialized, reinitializing...');
-      await _configureLocalTimeZone();
-    }
+    int retryCount = 0;
+    const maxRetries = 3;
 
-    try {
-      await _notificationsPlugin.cancelAll();
+    while (retryCount < maxRetries) {
+      try {
+        await _notificationsPlugin.cancelAll();
+        debugPrint('🗑️ All previous notifications canceled');
 
-      final now = DateTime.now();
-      final localNow = tz.TZDateTime.from(now, tz.local);
-      debugPrint('📅 Base time for scheduling: $localNow');
+        final now = DateTime.now();
+        final localNow = tz.TZDateTime.from(now, tz.local);
+        debugPrint('📅 Base time for scheduling: $localNow');
 
-      for (int i = 0; i < _notificationCount; i++) {
-        final scheduledTime = _calculateNotificationTime(localNow, i);
-        final titleIndex = i % _notificationTitles.length;
-        final messageIndex = i % _notificationMessages.length;
+        for (int i = 0; i < _notificationCount; i++) {
+          final scheduledTime = _calculateNotificationTime(localNow, i);
+          final titleIndex = i % _notificationTitles.length;
+          final messageIndex = i % _notificationMessages.length;
 
-        await _notificationsPlugin.zonedSchedule(
-          i,
-          _notificationTitles[titleIndex],
-          _notificationMessages[messageIndex],
-          scheduledTime,
-          _createNotificationDetails(),
-          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
-          matchDateTimeComponents: DateTimeComponents.time,
-        );
+          await _notificationsPlugin.zonedSchedule(
+            i,
+            _notificationTitles[titleIndex],
+            _notificationMessages[messageIndex],
+            scheduledTime,
+            _createNotificationDetails(),
+            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+            uiLocalNotificationDateInterpretation:
+                UILocalNotificationDateInterpretation.absoluteTime,
+            matchDateTimeComponents: DateTimeComponents.time,
+          );
 
-        debugPrint('📅 Notification #$i scheduled at $scheduledTime');
+          debugPrint('📅 Notification #$i scheduled at $scheduledTime');
+        }
+
+        debugPrint('✅ $_notificationCount notifications scheduled successfully');
+        return;
+      } catch (e) {
+        retryCount++;
+        debugPrint('⚠️ Failed to schedule notifications (Attempt $retryCount/$maxRetries): $e');
+        if (retryCount < maxRetries) {
+          await Future.delayed(const Duration(seconds: 2));
+          await _configureLocalTimeZone();
+        }
       }
-
-      debugPrint('✅ $_notificationCount notifications scheduled successfully');
-    } catch (e) {
-      debugPrint('⚠️ Failed to schedule notifications: $e');
-      // إعادة تهيئة المنطقة الزمنية والمحاولة مرة أخرى
-      await _configureLocalTimeZone();
     }
+
+    debugPrint('❌ Failed to schedule notifications after $maxRetries attempts');
   }
 
   tz.TZDateTime _calculateNotificationTime(tz.TZDateTime baseTime, int index) {
@@ -316,15 +312,16 @@ class NotificationService {
         0,
       );
 
-      // إذا كان الوقت قد مضى، اجعله في اليوم التالي
+      debugPrint('⏰ Calculating notification #$index: Base=$baseTime, Hours=$hours, Scheduled=$scheduledTime');
+
       if (scheduledTime.isBefore(baseTime)) {
         scheduledTime = scheduledTime.add(const Duration(days: 1));
+        debugPrint('⏰ Adjusted to next day: $scheduledTime');
       }
 
       return scheduledTime;
     } catch (e) {
       debugPrint('⚠️ Error calculating notification time: $e');
-      // في حالة الخطأ، استخدم الوقت الحالي + الساعات المطلوبة
       return baseTime.add(Duration(hours: _notificationInterval * (index + 1)));
     }
   }
@@ -332,14 +329,9 @@ class NotificationService {
   Future<void> setTimeZone(String timeZone) async {
     try {
       _currentTimeZone = timeZone;
-      
-      // إعادة تهيئة المنطقة الزمنية
       await _configureLocalTimeZone();
-      
-      // حفظ الإعدادات
       await _saveSettings();
       
-      // إعادة جدولة الإشعارات إذا كانت مفعلة
       if (_permissionsGranted) {
         await scheduleRepeatedNotifications();
       }
@@ -380,7 +372,6 @@ class NotificationService {
     }
   }
 
-  /// تفعيل أو إلغاء تفعيل الإشعارات
   Future<void> enableNotifications(bool enable) async {
     if (enable && !_permissionsGranted) {
       final granted = await requestPermissions();
@@ -404,13 +395,11 @@ class NotificationService {
     debugPrint('❌ All notifications canceled');
   }
 
-  /// الحصول على حالة الإشعارات
   bool get isEnabled => _permissionsGranted;
   int get notificationCount => _notificationCount;
   int get notificationInterval => _notificationInterval;
   String get timeZone => _currentTimeZone;
 
-  /// عرض إشعار فوري للاختبار
   Future<void> showTestNotification() async {
     if (!_permissionsGranted) {
       debugPrint('⚠️ Cannot show test notification: permissions not granted');

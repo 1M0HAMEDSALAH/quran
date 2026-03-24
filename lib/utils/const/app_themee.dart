@@ -8,7 +8,7 @@ ThemeData theme() {
     scaffoldBackgroundColor: const Color(0xFFF3F3F3),
     appBarTheme: appBarTheme(),
     radioTheme: radioTheme(),
-    dialogTheme: dialogTheme(),
+    // dialogTheme: dialogTheme(),
     textButtonTheme: textButtonTheme(),
     bottomSheetTheme: bottomSheetTheme(),
     dropdownMenuTheme: dropdownMenuTheme(),
@@ -19,9 +19,9 @@ ThemeData theme() {
     buttonTheme: buttonTheme(),
     // Add other theme elements that may contain text
     snackBarTheme: snackBarTheme(),
-    tabBarTheme: tabBarTheme(),
+    // tabBarTheme: tabBarTheme(),
     tooltipTheme: tooltipTheme(),
-    cardTheme: cardTheme(),
+    // cardTheme: cardTheme(),
     chipTheme: chipTheme(),
     listTileTheme: listTileTheme(),
   );
@@ -42,9 +42,9 @@ ThemeData darkTheme() {
       ),
     ),
     radioTheme: radioTheme(),
-    dialogTheme: dialogTheme().copyWith(
-      backgroundColor: const Color(0xFF1E1E1E),
-    ),
+    // dialogTheme: dialogTheme().copyWith(
+    //   backgroundColor: const Color(0xFF1E1E1E),
+    // ),
     textButtonTheme: textButtonTheme(),
     bottomSheetTheme: bottomSheetTheme().copyWith(
       backgroundColor: const Color(0xFF1E1E1E),
@@ -66,17 +66,17 @@ ThemeData darkTheme() {
       contentTextStyle: const TextStyle(
           color: Colors.white, fontFamily: 'BahijTheSansArabic'),
     ),
-    tabBarTheme: tabBarTheme().copyWith(
-      labelColor: Colors.white,
-      unselectedLabelColor: Colors.white70,
-    ),
+    // tabBarTheme: tabBarTheme().copyWith(
+    //   labelColor: Colors.white,
+    //   unselectedLabelColor: Colors.white70,
+    // ),
     tooltipTheme: tooltipTheme().copyWith(
       textStyle: const TextStyle(
           color: Colors.black, fontFamily: 'BahijTheSansArabic'),
     ),
-    cardTheme: cardTheme().copyWith(
-      color: const Color(0xFF2C2C2C),
-    ),
+    // cardTheme: cardTheme().copyWith(
+    //   color: const Color(0xFF2C2C2C),
+    // ),
     chipTheme: chipTheme().copyWith(
       backgroundColor: const Color(0xFF3C3C3C),
       labelStyle: const TextStyle(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:quran_app/app/modules/Setting/view/widgets/about_dialog.dart';
+import 'package:quran_app/qibla_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../utils/const/app_theme.dart';
 import '../controller/setting_controller.dart';
@@ -163,6 +164,7 @@ class SettingsScreen extends StatelessWidget {
                                     : Colors.grey,
                           ),
                           onTap: () => _showRatingSnackbar(context),
+                          // onTap: () => _showRatingSnackbar(context),
                         ),
                       ],
                     ),
@@ -337,8 +339,7 @@ class SettingsScreen extends StatelessWidget {
     try {
       await launchUrl(
         linkedInUrl,
-        mode:
-            LaunchMode.externalApplication,
+        mode: LaunchMode.externalApplication,
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -351,10 +352,9 @@ class SettingsScreen extends StatelessWidget {
   }
 
   void _showRatingSnackbar(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('شكرا لدعمكم للتطبيق'),
-        backgroundColor: AppColor.primaryColor,
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const QiblaScreen(),
       ),
     );
   }
