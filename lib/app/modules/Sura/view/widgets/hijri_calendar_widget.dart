@@ -1,15 +1,19 @@
-// Step 1: Add the hijri package to your pubspec.yaml
-// dependencies:
-//   hijri: ^3.0.0
-
-// hijri_calendar_widget.dart
 import 'package:quran_app/index.dart';
 
-
 class HijriCalendarWidget extends StatelessWidget {
+  // ✅ Computed once at construction, not on every build
   final HijriCalendar _hijriDate = HijriCalendar.now();
 
-  HijriCalendarWidget({Key? key}) : super(key: key);
+  // ✅ Cache all string values at construction time
+  late final String _fullHijriDate;
+  late final String _gregorianDate;
+  late final String _dayNumber;
+
+  HijriCalendarWidget({Key? key}) : super(key: key) {
+    _fullHijriDate = _computeFullHijriDate();
+    _gregorianDate = _computeGregorianDate();
+    _dayNumber = _hijriDate.hDay.toString();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +40,6 @@ class HijriCalendarWidget extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Background pattern
           Positioned.fill(
             child: Opacity(
               opacity: 0.1,
@@ -53,18 +56,20 @@ class HijriCalendarWidget extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _getFullHijriDate(),
+                      _fullHijriDate,
                       style: Get.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: "BahijTheSansArabic"),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: "BahijTheSansArabic",
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getGregorianDate(),
+                      _gregorianDate,
                       style: Get.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withOpacity(0.9),
-                          fontFamily: "BahijTheSansArabic"),
+                        color: Colors.white.withOpacity(0.9),
+                        fontFamily: "BahijTheSansArabic",
+                      ),
                     ),
                   ],
                 ),
@@ -88,87 +93,66 @@ class HijriCalendarWidget extends StatelessWidget {
       ),
       child: Center(
         child: Text(
-          _hijriDate.hDay.toString(),
+          _dayNumber,
           style: Get.textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontFamily: "BahijTheSansArabic"),
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontFamily: "BahijTheSansArabic",
+          ),
         ),
       ),
     );
   }
 
-  String _getFullHijriDate() {
+  String _computeFullHijriDate() {
     return '${_getHijriDayName()} ${_hijriDate.hDay} ${_getHijriMonthName()} ${_hijriDate.hYear}';
   }
 
-  String _getGregorianDate() {
-    DateTime now = DateTime.now();
+  String _computeGregorianDate() {
+    final now = DateTime.now();
     return '${_getGregorianDayName(now.weekday)} ${now.day}/${now.month}/${now.year}';
   }
 
   String _getHijriDayName() {
-    // Convert Hijri date to Gregorian to get the weekday
-    DateTime gregorianDate = _hijriDate.hijriToGregorian(
-        _hijriDate.hYear, _hijriDate.hMonth, _hijriDate.hDay);
-    int weekday = gregorianDate.weekday; // 1 = Monday, 7 = Sunday
-
-    List<String> weekDays = [
-      'الاثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت',
-      'الأحد'
+    final gregorianDate = _hijriDate.hijriToGregorian(
+      _hijriDate.hYear,
+      _hijriDate.hMonth,
+      _hijriDate.hDay,
+    );
+    const weekDays = [
+      'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس',
+      'الجمعة', 'السبت', 'الأحد',
     ];
-    return weekDays[weekday - 1];
+    return weekDays[gregorianDate.weekday - 1];
   }
 
   String _getHijriMonthName() {
-    List<String> months = [
-      'محرم',
-      'صفر',
-      'ربيع الأول',
-      'ربيع الثاني',
-      'جمادى الأولى',
-      'جمادى الآخرة',
-      'رجب',
-      'شعبان',
-      'رمضان',
-      'شوال',
-      'ذو القعدة',
-      'ذو الحجة'
+    const months = [
+      'محرم', 'صفر', 'ربيع الأول', 'ربيع الثاني',
+      'جمادى الأولى', 'جمادى الآخرة', 'رجب', 'شعبان',
+      'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة',
     ];
     return months[_hijriDate.hMonth - 1];
   }
 
   String _getGregorianDayName(int weekday) {
-    List<String> weekDays = [
-      'الاثنين',
-      'الثلاثاء',
-      'الأربعاء',
-      'الخميس',
-      'الجمعة',
-      'السبت',
-      'الأحد'
+    const weekDays = [
+      'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس',
+      'الجمعة', 'السبت', 'الأحد',
     ];
     return weekDays[weekday - 1];
   }
 }
 
 class HijriCalendarController extends GetxController {
-  // Observable for Hijri date
   final Rx<HijriCalendar> currentHijriDate = HijriCalendar.now().obs;
 
   @override
   void onInit() {
     super.onInit();
-    // Set Arabic locale for Hijri dates
     HijriCalendar.setLocal('ar');
   }
 
-  // Method to refresh the date (can be called periodically if needed)
   void refreshDate() {
     currentHijriDate.value = HijriCalendar.now();
     update();

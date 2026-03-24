@@ -1,6 +1,5 @@
 import 'package:quran_app/index.dart';
 
-
 class SurahDetailScreen extends StatefulWidget {
   final int surahNumber;
   final int highlightedVerse;

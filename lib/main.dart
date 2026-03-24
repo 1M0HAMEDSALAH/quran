@@ -2,27 +2,30 @@ import 'package:quran_app/index.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // تهيئة التخزين المحلي أولاً
+
+  // ✅ Init storage first (fast, required)
   await GetStorage.init();
 
-  try {
-    // تهيئة خدمة الإشعارات بدون طلب الصلاحيات
-    await NotificationService().initialize(
-      notificationCount: 4,
-      notificationInterval: 6,
-      timeZone: 'Africa/Cairo',
-      requestPermissions: true, // لا نطلب الصلاحيات عند بدء التطبيق
-    );
-  } catch (e) {
-    debugPrint('⚠️ Error initializing NotificationService: $e');
-  }
-
-  // تهيئة المتحكمات
+  // ✅ Register controllers before runApp
   Get.put(SettingsController(), permanent: true);
   Get.put(QuranPlayerController(), permanent: true);
 
+  // ✅ Run app immediately — don't block on notifications
   runApp(MyApp());
+
+  // ✅ Defer heavy/optional init AFTER first frame is painted
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    try {
+      await NotificationService().initialize(
+        notificationCount: 4,
+        notificationInterval: 6,
+        timeZone: 'Africa/Cairo',
+        requestPermissions: true,
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error initializing NotificationService: $e');
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -47,15 +50,9 @@ class MyApp extends StatelessWidget {
     });
   }
 
-  // Helper method to wrap routes with AppLayout
   List<GetPage> _wrapRoutesWithLayout(List<GetPage> routes) {
     return routes.map((route) {
-      // Skip wrapping the QuranPlayerScreen route
-      if (route.name == '/quran-player') {
-        return route;
-      }
-
-      // Wrap other routes with AppLayout
+      if (route.name == '/quran-player') return route;
       return GetPage(
         name: route.name,
         page: () => AppLayout(child: route.page()),

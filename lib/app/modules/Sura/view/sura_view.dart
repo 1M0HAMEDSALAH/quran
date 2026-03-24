@@ -2,32 +2,29 @@ import 'package:quran_app/index.dart';
 
 class SurahListView extends GetView<SurahListController> {
   SurahListView({super.key});
-  final settingsController = Get.find<SettingsController>();
 
-  final SurahListController surahListController =
-      Get.put(SurahListController());
-  final HijriCalendarController hijriController =
-      Get.put(HijriCalendarController());
+  // ✅ Use Get.find — controllers already registered by bindings
+  final settingsController = Get.find<SettingsController>();
+  final SurahListController surahListController = Get.put(SurahListController());
+  final HijriCalendarController hijriController = Get.put(HijriCalendarController());
 
   @override
   Widget build(BuildContext context) {
-    Get.put(AzkarController());
+    // ✅ Only put if not already registered
+    if (!Get.isRegistered<AzkarController>()) {
+      Get.put(AzkarController());
+    }
 
     return Scaffold(
       appBar: _buildAppBar(context),
       body: CustomScrollView(
         slivers: [
-          // Hijri Calendar
           SliverToBoxAdapter(
             child: HijriCalendarWidget(),
           ),
-
-          // Category Selector
           SliverToBoxAdapter(
             child: _buildCategorySelector(),
           ),
-
-          // Surah Grid
           Obx(() {
             if (controller.isLoading.value) {
               return const SliverToBoxAdapter(
@@ -54,13 +51,14 @@ class SurahListView extends GetView<SurahListController> {
                     return AnimationConfiguration.staggeredGrid(
                       position: index,
                       columnCount: 2,
-                      duration: const Duration(milliseconds: 100),
-                      delay: const Duration(milliseconds: 50),
+                      // ✅ Reduced animation duration for snappier feel
+                      duration: const Duration(milliseconds: 250),
+                      delay: const Duration(milliseconds: 30),
                       child: SlideAnimation(
-                        verticalOffset: 80.0,
+                        verticalOffset: 50.0,
                         curve: Curves.easeOutCubic,
                         child: ScaleAnimation(
-                          scale: 0.75,
+                          scale: 0.85,
                           curve: Curves.easeOutBack,
                           child: FadeInAnimation(
                             curve: Curves.easeIn,
@@ -76,10 +74,10 @@ class SurahListView extends GetView<SurahListController> {
             );
           }),
 
-          SliverPadding(
-            padding: const EdgeInsets.only(bottom: 75),
-            sliver: SliverToBoxAdapter(child: Container()),
-          )
+          const SliverPadding(
+            padding: EdgeInsets.only(bottom: 75),
+            sliver: SliverToBoxAdapter(child: SizedBox.shrink()),
+          ),
         ],
       ),
     );
@@ -106,8 +104,7 @@ class SurahListView extends GetView<SurahListController> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? AppColor.primaryColor : Colors.transparent,
+                    color: isSelected ? AppColor.primaryColor : Colors.transparent,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: isSelected
@@ -130,44 +127,47 @@ class SurahListView extends GetView<SurahListController> {
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
-    final isDarkMode = settingsController.isDarkMode.value;
-
-    return AppBar(
-      title: const Text(
-        'القرآن الكريم',
-      ),
-      centerTitle: true,
-      elevation: 0,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(20),
-        ),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.search,
-            color: isDarkMode ? Colors.white : Colors.black,
+  // ✅ Wrap AppBar in Obx so isDarkMode is reactive
+  PreferredSizeWidget _buildAppBar(BuildContext context) {
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight),
+      child: Obx(() {
+        final isDarkMode = settingsController.isDarkMode.value;
+        return AppBar(
+          title: const Text('القرآن الكريم'),
+          centerTitle: true,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              bottom: Radius.circular(20),
+            ),
           ),
-          onPressed: () => _handleSearch(context),
-        ),
-      ],
-      leading: IconButton(
-        onPressed: () {
-          Get.to(
-            () => const AzkarView(),
-            transition: Transition.rightToLeft,
-            duration: const Duration(milliseconds: 300),
-          );
-        },
-        icon: Image.asset(
-          'assets/beads.png',
-          width: 24,
-          height: 24,
-          color: isDarkMode ? Colors.white : Colors.black,
-        ),
-      ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.search,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+              onPressed: () => _handleSearch(context),
+            ),
+          ],
+          leading: IconButton(
+            onPressed: () {
+              Get.to(
+                () => const AzkarView(),
+                transition: Transition.rightToLeft,
+                duration: const Duration(milliseconds: 300),
+              );
+            },
+            icon: Image.asset(
+              'assets/beads.png',
+              width: 24,
+              height: 24,
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+        );
+      }),
     );
   }
 
@@ -182,13 +182,18 @@ class SurahListView extends GetView<SurahListController> {
   }
 
   Widget _buildSurahCard(int surahNumber) {
+    // ✅ Read once outside LayoutBuilder to avoid repeated lookups
     final isDarkMode = settingsController.isDarkMode.value;
+    final arabicName = getSurahNameArabic(surahNumber);
+    final englishName = getSurahName(surahNumber);
+    final verseCount = getVerseCount(surahNumber);
+    final revelationPlace = getPlaceOfRevelation(surahNumber);
 
     return LayoutBuilder(
       builder: (context, constraints) {
         double width = constraints.maxWidth;
         double height = constraints.maxHeight;
-        double baseFontSize = width * 0.045; // responsive font size
+        double baseFontSize = width * 0.045;
 
         return Hero(
           tag: 'surah_$surahNumber',
@@ -224,7 +229,6 @@ class SurahListView extends GetView<SurahListController> {
                 ),
                 child: Stack(
                   children: [
-                    /// Background pattern
                     Positioned.fill(
                       child: Opacity(
                         opacity: 0.1,
@@ -234,8 +238,6 @@ class SurahListView extends GetView<SurahListController> {
                         ),
                       ),
                     ),
-
-                    /// Surah number
                     Positioned(
                       top: 8,
                       right: 8,
@@ -257,8 +259,6 @@ class SurahListView extends GetView<SurahListController> {
                         ),
                       ),
                     ),
-
-                    /// Revelation type
                     Positioned(
                       top: 8,
                       left: 8,
@@ -272,9 +272,7 @@ class SurahListView extends GetView<SurahListController> {
                           color: Colors.white.withOpacity(0.3),
                         ),
                         child: Text(
-                          getPlaceOfRevelation(surahNumber) == "Makkah"
-                              ? 'مكية'
-                              : 'مدنية',
+                          revelationPlace == "Makkah" ? 'مكية' : 'مدنية',
                           style: TextStyle(
                             fontSize: baseFontSize * 1.4,
                             color: Colors.white,
@@ -282,14 +280,12 @@ class SurahListView extends GetView<SurahListController> {
                         ),
                       ),
                     ),
-
-                    /// Center Texts
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            getSurahNameArabic(surahNumber),
+                            arabicName,
                             style: Get.textTheme.titleLarge?.copyWith(
                               fontSize: baseFontSize * 2.8,
                               color: Colors.white,
@@ -299,7 +295,7 @@ class SurahListView extends GetView<SurahListController> {
                           ),
                           SizedBox(height: height * 0.01),
                           Text(
-                            '(${getSurahName(surahNumber)})',
+                            '($englishName)',
                             style: TextStyle(
                               fontSize: baseFontSize * 1.8,
                               color: Colors.white,
@@ -308,7 +304,7 @@ class SurahListView extends GetView<SurahListController> {
                           ),
                           SizedBox(height: height * 0.01),
                           Text(
-                            '${getVerseCount(surahNumber)} آية',
+                            '$verseCount آية',
                             style: TextStyle(
                               fontSize: baseFontSize * 1.7,
                               color: Colors.white,
