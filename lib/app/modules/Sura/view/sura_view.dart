@@ -1,4 +1,5 @@
 import 'package:quran_app/index.dart';
+import 'package:quran_app/app/modules/Sura/reading_position_service.dart';
 
 class SurahListView extends GetView<SurahListController> {
   SurahListView({super.key});
@@ -9,94 +10,112 @@ class SurahListView extends GetView<SurahListController> {
   final HijriCalendarController hijriController =
       Get.put(HijriCalendarController());
 
-  // Teal accent color matching the design
-  static const Color _teal = Color(0xFF2A9D8A);
-  static const Color _tealDark = Color(0xFF1F7A6A);
-  static const Color _bgLight = Color(0xFFF0F5F4);
+  // Deep Islamic elegance scheme
+  static const Color _primaryDark = Color(0xFF0F3E33);
+  static const Color _primaryLight = Color(0xFF165A4B);
+  static const Color _goldAccent = Color(0xFFCDA047);
+  static const Color _goldLight = Color(0xFFE4C578);
+  static const Color _bgLight = Color(0xFFF9F6F0);
+  static const Color _bgDark = Color(0xFF121212);
 
   @override
   Widget build(BuildContext context) {
     if (!Get.isRegistered<AzkarController>()) {
       Get.put(AzkarController());
     }
+    final isDarkMode = settingsController.isDarkMode.value;
 
     return Scaffold(
-      backgroundColor: _bgLight,
+      backgroundColor: isDarkMode ? _bgDark : _bgLight,
       appBar: _buildAppBar(context),
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // Today's Reflection card
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-              child: _buildReflectionCard(),
-            ),
-          ),
-
-          // Category selector
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: _buildCategorySelector(),
-            ),
-          ),
-
-          // Surah list
-          Obx(() {
-            if (controller.isLoading.value) {
-              return const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: 60),
-                  child: Center(
-                    child: CircularProgressIndicator(color: _teal),
-                  ),
-                ),
-              );
-            }
-
-            return SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final surahNumber = controller.filteredSurahs[index];
-                    return AnimationConfiguration.staggeredList(
-                      position: index,
-                      duration: const Duration(milliseconds: 300),
-                      delay: const Duration(milliseconds: 25),
-                      child: SlideAnimation(
-                        verticalOffset: 30.0,
-                        curve: Curves.easeOutCubic,
-                        child: FadeInAnimation(
-                          curve: Curves.easeIn,
-                          child: Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: _buildSurahCard(surahNumber),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                  childCount: controller.filteredSurahs.length,
+      body: Stack(
+        children: [
+          // Subtle background texture/pattern
+          Positioned.fill(
+            child: Opacity(
+              opacity: isDarkMode ? 0.05 : 0.03,
+              child: CustomPaint(
+                painter: QuranBackgroundPainter(
+                  color: isDarkMode ? Colors.white : Colors.black,
                 ),
               ),
-            );
-          }),
+            ),
+          ),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Today's Reflection card
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: _buildReflectionCard(),
+                ),
+              ),
 
-          const SliverPadding(
-            padding: EdgeInsets.only(bottom: 90),
-            sliver: SliverToBoxAdapter(child: SizedBox.shrink()),
+              // Category selector
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: _buildCategorySelector(),
+                ),
+              ),
+
+              // Surah list
+              Obx(() {
+                if (controller.isLoading.value) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 60),
+                      child: Center(
+                        child: CircularProgressIndicator(color: _goldAccent),
+                      ),
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final surahNumber = controller.filteredSurahs[index];
+                        return AnimationConfiguration.staggeredList(
+                          position: index,
+                          duration: const Duration(milliseconds: 400),
+                          delay: const Duration(milliseconds: 30),
+                          child: SlideAnimation(
+                            verticalOffset: 40.0,
+                            curve: Curves.easeOutQuart,
+                            child: FadeInAnimation(
+                              curve: Curves.easeIn,
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: _buildSurahCard(surahNumber),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                      childCount: controller.filteredSurahs.length,
+                    ),
+                  ),
+                );
+              }),
+
+              const SliverPadding(
+                padding: EdgeInsets.only(bottom: 90),
+                sliver: SliverToBoxAdapter(child: SizedBox.shrink()),
+              ),
+            ],
           ),
         ],
       ),
-      // bottomNavigationBar: _buildBottomNav(),
     );
   }
 
-  /// Dark teal card — uses HijriCalendarWidget for date display (no Obx needed)
+  /// Dark rich green card with gold accents
   Widget _buildReflectionCard() {
-    // Compute dates once, purely — no reactive reads here
     final HijriCalendar hijri = HijriCalendar.now();
     final now = DateTime.now();
 
@@ -104,240 +123,284 @@ class SurahListView extends GetView<SurahListController> {
     final String gregorianDate = _formatGregorianDate(now);
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         gradient: const LinearGradient(
-          colors: [Color(0xFF1E6E60), Color(0xFF2A9D8A)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          colors: [_primaryDark, _primaryLight],
+          begin: Alignment.bottomLeft,
+          end: Alignment.topRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: _teal.withOpacity(0.35),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: _primaryDark.withOpacity(0.4),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
+        border: Border.all(color: _goldAccent.withOpacity(0.3), width: 1.5),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          // Label row
-          Row(
-            children: [
-              const Icon(Icons.calendar_today_outlined,
-                  color: Colors.white70, size: 13),
-              const SizedBox(width: 6),
-              Text(
-                "TODAY'S REFLECTION",
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.75),
-                  fontSize: 11,
-                  letterSpacing: 1.4,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Hijri date large
-          Text(
-            hijriDate,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Georgia',
-              height: 1.2,
+          // Decorative background pattern
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Opacity(
+              opacity: 0.1,
+              child: Icon(Icons.star_purple500_sharp,
+                  size: 150, color: _goldLight),
             ),
           ),
-          const SizedBox(height: 4),
-
-          // Gregorian date
-          Text(
-            gregorianDate,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 13.5,
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          // Bottom row: avatars + resume button
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 64,
-                height: 34,
-                child: Stack(
-                  children: [
-                    _avatarCircle('A'),
-                    Positioned(left: 26, child: _avatarCircle('Ω')),
-                  ],
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  // TODO: navigate to last read position
-                },
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Resume Reading',
+              // Label row
+              Row(
+                children: [
+                  Icon(Icons.auto_awesome,
+                      color: _goldAccent.withOpacity(0.9), size: 16),
+                  const SizedBox(width: 8),
+                  Text(
+                    "اليوم",
                     style: TextStyle(
-                      color: Color(0xFF1E6E60),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
+                      color: _goldLight.withOpacity(0.9),
+                      fontSize: 14,
+                      fontFamily: 'Amiri',
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Hijri date large
+              Text(
+                hijriDate,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'Amiri',
+                  height: 1.2,
                 ),
+              ),
+              const SizedBox(height: 4),
+
+              // Gregorian date
+              Text(
+                gregorianDate,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Bottom row: Read button
+              Row(
+                children: [
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () async {
+                      final pos = await ReadingPositionService.loadPosition();
+                      if (pos != null) {
+                        controller.navigateToSurahDetail(pos.surahNumber);
+                      } else {
+                        controller.navigateToSurahDetail(1);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _goldAccent,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _goldAccent.withOpacity(0.4),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          )
+                        ],
+                      ),
+                      child: const Row(
+                        children: [
+                          Text(
+                            'متابعة القراءة',
+                            style: TextStyle(
+                              color:
+                                  Color(0xFF2A1C00),
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Amiri',
+                              fontSize: 14,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(Icons.arrow_forward_rounded,
+                              color: Color(0xFF2A1C00), size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 12,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(() => const QiblaScreen());
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.transparent,
+                        border: Border.all(color: _goldAccent, width: 1.5),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _primaryDark.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          )
+                        ],
+                      ),
+                      child: const Row(
+                        children: [
+                          Text(
+                            'اتجاه القبلة',
+                            style: TextStyle(
+                              color: _goldAccent,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'Amiri',
+                              fontSize: 16,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(Icons.explore, color: _goldAccent, size: 18),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _avatarCircle(String label) {
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.25),
-        border: Border.all(color: Colors.white, width: 1.5),
-      ),
-      child: Center(
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
       ),
     );
   }
 
   String _formatHijriDate(HijriCalendar hijri) {
     const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
-    ];
-    const months = [
-      'Muharram',
-      'Safar',
-      "Rabi' al-Awwal",
-      "Rabi' al-Thani",
-      'Jumada al-Awwal',
-      'Jumada al-Thani',
-      'Rajab',
-      "Sha'ban",
-      'Ramadan',
-      'Shawwal',
-      "Dhu al-Qi'dah",
-      'Dhu al-Hijjah',
+      'الإثنين',
+      'الثلاثاء',
+      'الأربعاء',
+      'الخميس',
+      'الجمعة',
+      'السبت',
+      'الأحد'
     ];
     final greg = hijri.hijriToGregorian(hijri.hYear, hijri.hMonth, hijri.hDay);
     final dayName = days[greg.weekday - 1];
-    final monthName = months[hijri.hMonth - 1];
-    return '$dayName ${hijri.hDay} $monthName ${hijri.hYear}';
+    return '$dayName ${hijri.hDay} ${hijri.longMonthName} ${hijri.hYear}';
   }
 
   String _formatGregorianDate(DateTime now) {
     const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+      'يناير',
+      'فبراير',
+      'مارس',
+      'أبريل',
+      'مايو',
+      'يونيو',
+      'يوليو',
+      'أغسطس',
+      'سبتمبر',
+      'أكتوبر',
+      'نوفمبر',
+      'ديسمبر'
     ];
-    return '${months[now.month - 1]} ${now.day}, ${now.year}';
+    return '${now.day} ${months[now.month - 1]} ${now.year}';
   }
 
-  /// Pill-shaped category tabs: All / Makki / Madani
+  /// Elegant Category tabs
   Widget _buildCategorySelector() {
-    return Obx(() => Row(
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: controller.categories.map((category) {
-            final isSelected = controller.selectedCategory.value == category;
-            final label = category == 'all'
-                ? 'All'
-                : category == 'meccan'
-                    ? 'Makki'
-                    : 'Madani';
+    return Obx(() => SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: controller.categories.map((category) {
+              final isSelected = controller.selectedCategory.value == category;
+              final label = category == 'all'
+                  ? 'الكل'
+                  : category == 'meccan'
+                      ? 'مكيّة'
+                      : 'مدنيّة';
 
-            return GestureDetector(
-              onTap: () => controller.selectCategory(category),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.only(right: 10),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 22, vertical: 9),
-                decoration: BoxDecoration(
-                  color: isSelected ? _teal : Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: _teal.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          )
-                        ]
-                      : [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )
-                        ],
-                ),
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : Colors.grey.shade600,
-                    fontWeight:
-                        isSelected ? FontWeight.w700 : FontWeight.normal,
-                    fontSize: 14,
+              return GestureDetector(
+                onTap: () => controller.selectCategory(category),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  margin: const EdgeInsets.only(left: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? _primaryLight
+                        : (settingsController.isDarkMode.value
+                            ? const Color(0xFF1E1E1E)
+                            : Colors.white),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: isSelected
+                          ? _primaryLight
+                          : (settingsController.isDarkMode.value
+                              ? Colors.grey.shade800
+                              : Colors.grey.shade300),
+                      width: 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: _primaryLight.withOpacity(0.3),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            )
+                          ]
+                        : [],
+                  ),
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected
+                          ? Colors.white
+                          : (settingsController.isDarkMode.value
+                              ? Colors.white70
+                              : Colors.grey.shade800),
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontFamily: 'Amiri',
+                      fontSize: 16,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ));
   }
 
-  /// AppBar matching the screenshot: centered italic title, search icon, hamburger
+  /// AppBar matched to premium feel
   PreferredSizeWidget _buildAppBar(BuildContext context) {
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: Obx(() {
         final isDarkMode = settingsController.isDarkMode.value;
         return AppBar(
-          backgroundColor: _bgLight,
+          backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
@@ -345,32 +408,32 @@ class SurahListView extends GetView<SurahListController> {
               Get.to(
                 () => const AzkarView(),
                 transition: Transition.rightToLeft,
-                duration: const Duration(milliseconds: 150),
+                duration: const Duration(milliseconds: 300),
               );
             },
             icon: Image.asset(
               'assets/beads.png',
-              width: 24,
-              height: 24,
-              color: isDarkMode ? Colors.white : Colors.black,
+              width: 26,
+              height: 26,
+              color: isDarkMode ? _goldLight : _primaryDark,
             ),
           ),
-          title: const Text(
+          title: Text(
             'القرآن الكريم',
             style: TextStyle(
-              fontStyle: FontStyle.italic,
               fontFamily: 'Amiri',
               fontWeight: FontWeight.w700,
-              fontSize: 22,
-              color: Color(0xFF1E3A35),
+              fontSize: 26,
+              color: isDarkMode ? Colors.white : _primaryDark,
             ),
           ),
           actions: [
             IconButton(
-              icon: Icon(Icons.search,
-                  color: isDarkMode ? Colors.white : Colors.black87),
+              icon: Icon(Icons.search_rounded,
+                  color: isDarkMode ? Colors.white : _primaryDark, size: 28),
               onPressed: () => _handleSearch(context),
             ),
+            const SizedBox(width: 8),
           ],
         );
       }),
@@ -387,117 +450,105 @@ class SurahListView extends GetView<SurahListController> {
     }
   }
 
-  /// Each surah row card matching the screenshot layout
+  /// Beautifully crafted surah row card
   Widget _buildSurahCard(int surahNumber) {
     final isDarkMode = settingsController.isDarkMode.value;
     final arabicName = getSurahNameArabic(surahNumber);
     final englishName = getSurahName(surahNumber);
-    // final transliteration = getSurahTransliteration(surahNumber); // e.g. "The Opening"
     final verseCount = getVerseCount(surahNumber);
-    final revelationPlace = getPlaceOfRevelation(surahNumber);
-    final isMakki = revelationPlace == "Makkah";
-    final badgeLabel = isMakki ? 'MAKKI' : 'MADANI';
+    final isMakki = getPlaceOfRevelation(surahNumber) == "Makkah";
 
     return Hero(
       tag: 'surah_$surahNumber',
       child: Material(
         color: Colors.transparent,
-        child: GestureDetector(
+        child: InkWell(
           onTap: () => controller.navigateToSurahDetail(surahNumber),
+          borderRadius: BorderRadius.circular(20),
+          highlightColor: _primaryLight.withOpacity(0.1),
+          splashColor: _goldAccent.withOpacity(0.2),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDarkMode ? const Color(0xFF1C2E2B) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              color: isDarkMode ? const Color(0xFF1A1D1C) : Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isDarkMode
+                    ? Colors.white10
+                    : Colors.black.withOpacity(0.04),
+                width: 1,
+              ),
+              boxShadow: isDarkMode
+                  ? []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
             ),
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Number circle
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFDDF2EE),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$surahNumber',
-                      style: const TextStyle(
-                        color: _teal,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 14),
-
-                // Left text block: name + ayah count
+                // Arabic name and Ayah count (RTL layout)
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Top row: English name + badge
+                      Text(
+                        arabicName,
+                        style: TextStyle(
+                          fontFamily: 'Amiri',
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: isDarkMode ? _goldLight : _primaryDark,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          Icon(Icons.menu_book_rounded,
+                              size: 14, color: Colors.grey.shade500),
+                          const SizedBox(width: 4),
                           Text(
-                            englishName,
+                            '$verseCount آيَات',
                             style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: isDarkMode
-                                  ? Colors.white
-                                  : const Color(0xFF1E3A35),
+                              fontSize: 13,
+                              fontFamily: 'Amiri',
+                              color: Colors.grey.shade500,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          _buildBadge(badgeLabel, isMakki),
+                          const SizedBox(width: 12),
+                          _buildBadge(isMakki ? 'مكيّة' : 'مدنيّة', isMakki),
                         ],
-                      ),
-                      // const SizedBox(height: 2),
-                      // // Transliteration / meaning
-                      // Text(
-                      //   transliteration,
-                      //   style: TextStyle(
-                      //     fontSize: 12.5,
-                      //     color: Colors.grey.shade500,
-                      //   ),
-                      // ),
-                      const SizedBox(height: 6),
-                      // Ayah count
-                      Text(
-                        '$verseCount AYAH',
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey,
-                          letterSpacing: 0.5,
-                          fontWeight: FontWeight.w500,
-                        ),
                       ),
                     ],
                   ),
                 ),
 
-                // Arabic name on the right
-                Text(
-                  arabicName,
-                  style: TextStyle(
-                    fontFamily: 'Amiri', // or your Arabic font
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: isDarkMode ? Colors.white : const Color(0xFF1E3A35),
-                  ),
-                  textDirection: TextDirection.rtl,
+                // Beautiful numbered geometric frame
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    CustomPaint(
+                      size: const Size(54, 54),
+                      painter: IslamicBorderPainter(
+                        color: isDarkMode
+                            ? _goldAccent.withOpacity(0.4)
+                            : _primaryDark.withOpacity(0.2),
+                      ),
+                    ),
+                    Text(
+                      '$surahNumber',
+                      style: TextStyle(
+                        color: isDarkMode ? _goldLight : _primaryDark,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        fontFamily: 'Amiri',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -509,67 +560,104 @@ class SurahListView extends GetView<SurahListController> {
 
   Widget _buildBadge(String label, bool isMakki) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isMakki
-            ? const Color(0xFFF0F5F4) // light grey-green for Makki
-            : _teal, // solid teal for Madani
-        borderRadius: BorderRadius.circular(6),
+        color:
+            isMakki ? const Color(0xFFF0F5F4) : _primaryLight.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color:
+              isMakki ? Colors.grey.shade300 : _primaryLight.withOpacity(0.3),
+        ),
       ),
       child: Text(
         label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 11,
+          fontFamily: 'Amiri',
           fontWeight: FontWeight.w700,
-          color: isMakki ? Colors.grey.shade600 : Colors.white,
-          letterSpacing: 0.5,
+          color: isMakki ? Colors.grey.shade700 : _primaryLight,
         ),
       ),
     );
+  }
+}
+
+class IslamicBorderPainter extends CustomPainter {
+  final Color color;
+
+  IslamicBorderPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    final path = Path();
+    for (int i = 0; i < 8; i++) {
+      final angle = (i * 360 / 8) * (3.14159 / 180);
+      final x = center.dx +
+          radius *
+              0.85 *
+              (i % 2 == 0 ? 1 : 0.7) *
+              (i == 0 || i == 4
+                  ? 1
+                  : (i == 1 || i == 3 || i == 5 || i == 7 ? 0.9 : 1)) *
+              1.0 *
+              (1.0) *
+              (3.14159 / 180).abs();
+      // Wait, drawing a proper 8 point star
+    }
+
+    // Easier 8 point star:
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+
+    final starPath = Path();
+    for (int i = 0; i < 8; i++) {
+      canvas.rotate(3.1415926535 / 4);
+      canvas.drawRect(
+          Rect.fromCenter(
+              center: Offset.zero, width: radius * 1.3, height: radius * 1.3),
+          paint);
+    }
+
+    canvas.restore();
   }
 
-  /// Bottom navigation bar with 4 icons
-  Widget _buildBottomNav() {
-    return Container(
-      height: 70,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 12,
-            offset: const Offset(0, -3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _navItem(Icons.menu_book_rounded, true),
-          _navItem(Icons.search, false),
-          _navItem(Icons.bookmark_outline, false),
-          _navItem(Icons.settings_outlined, false),
-        ],
-      ),
-    );
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class QuranBackgroundPainter extends CustomPainter {
+  final Color color;
+
+  QuranBackgroundPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    final double step = 60.0;
+    for (double y = 0; y < size.height; y += step) {
+      for (double x = 0; x < size.width; x += step) {
+        canvas.drawCircle(Offset(x, y), step / 3, paint);
+        canvas.drawRect(
+            Rect.fromCenter(
+                center: Offset(x, y), width: step / 1.5, height: step / 1.5),
+            paint);
+      }
+    }
   }
 
-  Widget _navItem(IconData icon, bool isActive) {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: isActive ? _teal : Colors.transparent,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.white : Colors.grey.shade400,
-          size: 22,
-        ),
-      ),
-    );
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -41,16 +41,24 @@ class MiniQuranPlayer extends StatelessWidget {
             child: Row(
               children: [
                 Obx(() {
+                  final primaryColor = const Color(0xFF0F3E33);
+                  final goldColor = const Color(0xFFCDA047);
                   return Container(
-                    width: 36,
-                    height: 36,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: controller.hasError.value
                           ? Colors.red.withOpacity(0.2)
                           : isDarkMode.isDarkMode.value
-                              ? Colors.teal.shade800
-                              : Colors.teal.shade100,
+                              ? goldColor.withOpacity(0.1)
+                              : primaryColor.withOpacity(0.05),
+                      border: Border.all(
+                        color: isDarkMode.isDarkMode.value
+                            ? goldColor.withOpacity(0.3)
+                            : primaryColor.withOpacity(0.2),
+                        width: 1,
+                      ),
                     ),
                     child: Center(
                       child: controller.hasError.value
@@ -63,45 +71,46 @@ class MiniQuranPlayer extends StatelessWidget {
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     color: isDarkMode.isDarkMode.value
-                                        ? Colors.tealAccent
-                                        : Colors.teal,
+                                        ? goldColor
+                                        : primaryColor,
                                   ),
                                 )
                               : Icon(
                                   controller.isPlaying.value
                                       ? Icons.pause
                                       : Icons.play_arrow,
-                                  size: 20,
+                                  size: 24,
                                   color: isDarkMode.isDarkMode.value
-                                      ? Colors.white
-                                      : Colors.teal.shade700,
+                                      ? goldColor
+                                      : primaryColor,
                                 ),
                     ),
                   );
                 }),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Obx(() => Text(
                             getSurahNameArabic(controller.currentSurah.value),
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                              fontSize: 18,
+                              fontFamily: "Amiri",
                               color: isDarkMode.isDarkMode.value
-                                  ? Colors.white
-                                  : Colors.black87,
+                                  ? const Color(0xFFCDA047)
+                                  : const Color(0xFF0F3E33),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           )),
-                      const SizedBox(height: 2),
                       Obx(() => Text(
                             controller.currentReader?.name ?? "",
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 13,
+                              fontFamily: "Amiri",
                               color: isDarkMode.isDarkMode.value
                                   ? Colors.grey.shade400
                                   : Colors.grey.shade700,
@@ -119,8 +128,9 @@ class MiniQuranPlayer extends StatelessWidget {
                             ? Icons.pause
                             : Icons.play_arrow,
                         color: isDarkMode.isDarkMode.value
-                            ? Colors.tealAccent
-                            : Colors.teal.shade700,
+                            ? const Color(0xFFCDA047)
+                            : const Color(0xFF0F3E33),
+                        size: 28,
                       )),
                 ),
                 IconButton(
@@ -130,8 +140,9 @@ class MiniQuranPlayer extends StatelessWidget {
                   icon: Icon(
                     Icons.close,
                     color: isDarkMode.isDarkMode.value
-                        ? Colors.grey.shade400
-                        : Colors.grey.shade700,
+                        ? Colors.grey.shade500
+                        : Colors.grey.shade400,
+                    size: 24,
                   ),
                 ),
               ],

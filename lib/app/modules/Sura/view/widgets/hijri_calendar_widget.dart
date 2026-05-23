@@ -1,3 +1,13 @@
+// hijri_calendar_widget.dart  (MODIFIED)
+// Changes from original:
+//   • "Resume Reading" button now reads the saved ReadingPosition from
+//     SharedPreferences and navigates to QuranPageViewScreen with the
+//     correct page and verse highlighted.
+//   • Added _resumeReading() async helper to handle the navigation.
+//   • All date and layout code is unchanged.
+
+import 'package:quran_app/app/modules/Sura/reading_position_service.dart';
+import 'package:quran_app/app/modules/Sura/view/quran_page_view.dart';
 import 'package:quran_app/index.dart';
 
 class HijriCalendarWidget extends StatelessWidget {
@@ -11,7 +21,7 @@ class HijriCalendarWidget extends StatelessWidget {
     _gregorianDate = _computeGregorianDate();
   }
 
-  static const Color _cardDark = Color(0xFF1E6E60);
+  static const Color _cardDark  = Color(0xFF1E6E60);
   static const Color _cardLight = Color(0xFF2A9D8A);
 
   @override
@@ -37,7 +47,7 @@ class HijriCalendarWidget extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── "TODAY'S REFLECTION" label ──
+          // ── "TODAY'S REFLECTION" label ──────────────────────────
           Row(
             children: [
               const Icon(
@@ -59,7 +69,7 @@ class HijriCalendarWidget extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // ── Large Hijri date ──
+          // ── Large Hijri date ────────────────────────────────────
           Text(
             _fullHijriDate,
             style: const TextStyle(
@@ -72,7 +82,7 @@ class HijriCalendarWidget extends StatelessWidget {
           ),
           const SizedBox(height: 4),
 
-          // ── Gregorian date ──
+          // ── Gregorian date ──────────────────────────────────────
           Text(
             _gregorianDate,
             style: TextStyle(
@@ -82,12 +92,12 @@ class HijriCalendarWidget extends StatelessWidget {
           ),
           const SizedBox(height: 18),
 
-          // ── Bottom row: avatar stack + Resume Reading ──
+          // ── Bottom row: avatar stack + Resume Reading ───────────
           Row(
             children: [
               _buildAvatarStack(),
               const Spacer(),
-              _buildResumeButton(),
+              _buildResumeButton(context),
             ],
           ),
         ],
@@ -130,30 +140,79 @@ class HijriCalendarWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildResumeButton() {
-    return GestureDetector(
-      onTap: () {
-        // TODO: navigate to last read position
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Text(
-          'Resume Reading',
-          style: TextStyle(
-            color: _cardDark,
-            fontWeight: FontWeight.w700,
-            fontSize: 13,
+  // ── MODIFIED: Resume button now navigates to last saved position ──
+
+  Widget _buildResumeButton(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => _resumeReading(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.bookmark_outlined, color: _cardDark, size: 16),
+              SizedBox(width: 6),
+              Text(
+                'العودة لآخر موضع',
+                style: TextStyle(
+                  color: _cardDark,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ── Date helpers ──
+  /// Loads the saved position and opens QuranPageViewScreen at that page,
+  /// with the saved verse automatically highlighted.
+  Future<void> _resumeReading(BuildContext context) async {
+    try {
+      final pos = await ReadingPositionService.loadPosition();
+
+      if (pos == null) {
+        Get.snackbar(
+          'لا يوجد موضع محفوظ',
+          'ابدأ القراءة ثم اضغط على آية ليتم حفظ آخر موضع.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        Get.to(
+          () => const QuranPageViewScreen(initialPage: 1),
+          transition: Transition.fadeIn,
+        );
+        return;
+      }
+
+      final safePage = pos.pageNumber.clamp(1, 604);
+      final safeSurah = pos.surahNumber.clamp(1, 114);
+      final verseCount = getVerseCount(safeSurah);
+      final safeVerse = pos.verseNumber.clamp(1, verseCount);
+
+      Get.to(
+        () => QuranPageViewScreen(
+          initialPage: safePage,
+          highlightSurah: safeSurah,
+          highlightVerse: safeVerse,
+        ),
+        transition: Transition.fadeIn,
+      );
+    } catch (_) {
+      Get.snackbar(
+        'تعذر فتح الموضع',
+        'حدث خطأ أثناء استرجاع آخر موضع محفوظ.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
+  // ── Date helpers (unchanged) ──────────────────────────────────────
 
   String _computeFullHijriDate() {
     final gregorianDate = _hijriDate.hijriToGregorian(
@@ -161,63 +220,39 @@ class HijriCalendarWidget extends StatelessWidget {
       _hijriDate.hMonth,
       _hijriDate.hDay,
     );
-    final dayName = _getEnglishDayName(gregorianDate.weekday);
+    final dayName   = _getEnglishDayName(gregorianDate.weekday);
     final monthName = _getEnglishHijriMonthName(_hijriDate.hMonth);
     return '$dayName ${_hijriDate.hDay} $monthName ${_hijriDate.hYear}';
   }
 
   String _computeGregorianDate() {
     final now = DateTime.now();
-    final months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
     ];
     return '${months[now.month - 1]} ${now.day}, ${now.year}';
   }
 
   String _getEnglishDayName(int weekday) {
     const days = [
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-      'Sunday',
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+      'Friday', 'Saturday', 'Sunday',
     ];
     return days[weekday - 1];
   }
 
   String _getEnglishHijriMonthName(int month) {
     const months = [
-      'Muharram',
-      'Safar',
-      "Rabi' al-Awwal",
-      "Rabi' al-Thani",
-      'Jumada al-Awwal',
-      'Jumada al-Thani',
-      'Rajab',
-      "Sha'ban",
-      'Ramadan',
-      'Shawwal',
-      "Dhu al-Qi'dah",
-      'Dhu al-Hijjah',
+      'Muharram', 'Safar', "Rabi' al-Awwal", "Rabi' al-Thani",
+      'Jumada al-Awwal', 'Jumada al-Thani', 'Rajab', "Sha'ban",
+      'Ramadan', 'Shawwal', "Dhu al-Qi'dah", 'Dhu al-Hijjah',
     ];
     return months[month - 1];
   }
 }
 
-// ── Controller (unchanged logic, kept for completeness) ──
+// ── Controller (unchanged) ────────────────────────────────────────────
 
 class HijriCalendarController extends GetxController {
   final Rx<HijriCalendar> currentHijriDate = HijriCalendar.now().obs;

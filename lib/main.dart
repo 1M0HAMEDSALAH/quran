@@ -16,14 +16,20 @@ void main() async {
   // ✅ Defer heavy/optional init AFTER first frame is painted
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     try {
+      // ✅ تهيئة خدمة الإشعارات
       await NotificationService().initialize(
         notificationCount: 4,
         notificationInterval: 6,
         timeZone: 'Africa/Cairo',
         requestPermissions: true,
       );
+
+      // ✅ تسجيل PrayerTimesController لجلب مواقيت الصلاة وجدولة إشعارات الأذان تلقائياً
+      if (!Get.isRegistered<PrayerTimesController>()) {
+        Get.put(PrayerTimesController(), permanent: true);
+      }
     } catch (e) {
-      debugPrint('⚠️ Error initializing NotificationService: $e');
+      debugPrint('⚠️ Error initializing services: $e');
     }
   });
 }

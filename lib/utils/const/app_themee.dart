@@ -4,7 +4,7 @@ import 'package:quran_app/index.dart';
 ThemeData theme() {
   return ThemeData(
     fontFamily: 'BahijTheSansArabic', // Base font family for the entire app
-    primaryColor: const Color(0xFFF35F16),
+    primaryColor: const Color(0xFF0F3E33),
     scaffoldBackgroundColor: const Color(0xFFF3F3F3),
     appBarTheme: appBarTheme(),
     radioTheme: radioTheme(),
@@ -30,7 +30,7 @@ ThemeData theme() {
 // Dark Theme
 ThemeData darkTheme() {
   return ThemeData.dark().copyWith(
-    primaryColor: const Color(0xFFF35F16),
+    primaryColor: const Color(0xFF0F3E33),
     scaffoldBackgroundColor: const Color(0xFF121212),
     appBarTheme: appBarTheme().copyWith(
       backgroundColor: const Color(0xFF1E1E1E),
@@ -196,7 +196,7 @@ InputDecorationTheme inputDecorationTheme() {
 TextButtonThemeData textButtonTheme() {
   return TextButtonThemeData(
     style: ButtonStyle(
-      foregroundColor: const WidgetStatePropertyAll(Color(0xFFF35F16)),
+      foregroundColor: const WidgetStatePropertyAll(Color(0xFF0F3E33)),
       textStyle: const WidgetStatePropertyAll(
         TextStyle(fontFamily: 'BahijTheSansArabic'), // Add font to text buttons
       ),
@@ -277,7 +277,7 @@ DropdownMenuThemeData dropdownMenuTheme() {
         borderRadius: BorderRadius.circular(8),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(width: 2, color: Color(0xFFF35F16)),
+        borderSide: const BorderSide(width: 2, color: Color(0xFF0F3E33)),
         borderRadius: BorderRadius.circular(8),
       ),
       labelStyle: const TextStyle(fontFamily: 'BahijTheSansArabic'), // Add font
@@ -313,7 +313,7 @@ DropdownMenuThemeData darkDropdownMenuTheme() {
         borderRadius: BorderRadius.circular(8),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: const BorderSide(width: 2, color: Color(0xFFF35F16)),
+        borderSide: const BorderSide(width: 2, color: Color(0xFF0F3E33)),
         borderRadius: BorderRadius.circular(8),
       ),
       labelStyle: const TextStyle(
@@ -337,7 +337,7 @@ ButtonThemeData buttonTheme() {
     disabledColor: Colors.grey.shade200,
     alignedDropdown: true,
     colorScheme: const ColorScheme.light(
-      primary: Color(0xFFF35F16),
+      primary: Color(0xFF0F3E33),
     ),
     textTheme: ButtonTextTheme.primary, // Ensure button text uses theme
   );
@@ -345,7 +345,7 @@ ButtonThemeData buttonTheme() {
 
 RadioThemeData radioTheme() {
   return const RadioThemeData(
-    fillColor: WidgetStatePropertyAll(Color(0xFFF35F16)),
+    fillColor: WidgetStatePropertyAll(Color(0xFF0F3E33)),
   );
 }
 
@@ -357,7 +357,7 @@ SnackBarThemeData snackBarTheme() {
       fontFamily: 'BahijTheSansArabic',
       color: Colors.white,
     ),
-    actionTextColor: Color(0xFFF35F16),
+    actionTextColor: Color(0xFF0F3E33),
   );
 }
 
@@ -370,12 +370,12 @@ TabBarTheme tabBarTheme() {
     unselectedLabelStyle: TextStyle(
       fontFamily: 'BahijTheSansArabic',
     ),
-    labelColor: Color(0xFFF35F16),
+    labelColor: Color(0xFF0F3E33),
     unselectedLabelColor: Colors.black54,
     indicator: UnderlineTabIndicator(
       borderSide: BorderSide(
         width: 2.0,
-        color: Color(0xFFF35F16),
+        color: Color(0xFF0F3E33),
       ),
     ),
   );

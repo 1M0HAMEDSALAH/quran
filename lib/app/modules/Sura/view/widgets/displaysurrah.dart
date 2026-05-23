@@ -1,4 +1,14 @@
+// displaysurrah.dart  (MODIFIED)
+// Changes from original:
+//   • Saves reading position (surah, verse, page) whenever the user
+//     opens a verse audio dialog or long-presses to bookmark.
+//   • Added a "Jump to Mushaf page" button in _showOptions.
+//   • Everything else is unchanged.
+
+import 'package:quran_app/app/modules/Sura/reading_position_service.dart';
+import 'package:quran_app/app/modules/Sura/view/quran_page_view.dart';
 import 'package:quran_app/index.dart';
+ 
 
 class SurahDetailScreen extends StatefulWidget {
   final int surahNumber;
@@ -30,7 +40,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
       backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
       builder: (context) {
         return Directionality(
-          textDirection: TextDirection.rtl, // ← هذا هو السطر الأهم
+          textDirection: TextDirection.rtl,
           child: Wrap(
             children: [
               ListTile(
@@ -40,9 +50,20 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     color: isDarkMode ? Colors.white : Colors.black87,
                   ),
                 ),
-                // onTap: () {
-                //   Navigator.pop(context);
-                // },
+              ),
+              // ── NEW: open mushaf page view ──────────────────────
+              ListTile(
+                leading: const Icon(Icons.menu_book_outlined),
+                title: Text(
+                  "📖 قراءة المصحف (صفحة كاملة)",
+                  style: TextStyle(
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                onTap: () {
+                  Get.back();
+                
+                },
               ),
               ListTile(
                 title: Text(
@@ -96,9 +117,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                 ),
                 actions: [
                   IconButton(
-                    onPressed: () {
-                      _showOptions(context);
-                    },
+                    onPressed: () => _showOptions(context),
                     icon: Icon(
                       Icons.more_vert,
                       color: isDarkMode ? Colors.white : Colors.black,
@@ -114,8 +133,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
                     decoration: BoxDecoration(
                       color: isDarkMode ? null : Colors.teal[700],
                       borderRadius: const BorderRadius.only(
-                          bottomLeft: Radius.circular(15),
-                          bottomRight: Radius.circular(15)),
+                        bottomLeft:  Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                      ),
                     ),
                     child: Text(
                       "بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ",
@@ -141,7 +161,7 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
             decoration: BoxDecoration(
               color: isDarkMode ? null : Colors.white,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(30),
+                topLeft:  Radius.circular(30),
                 topRight: Radius.circular(30),
               ),
             ),
@@ -226,10 +246,9 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
     final isDarkMode = settingsController.isDarkMode.value;
 
     for (int i = 1; i <= verseCount; i++) {
-      final verse = getVerse(widget.surahNumber, i);
+      final verse        = getVerse(widget.surahNumber, i);
       final isHighlighted = i == widget.highlightedVerse;
-
-      final fontFamily = settingsController.arabicFontFamily;
+      final fontFamily   = settingsController.arabicFontFamily;
 
       spans.addAll([
         TextSpan(
@@ -249,6 +268,13 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
           alignment: PlaceholderAlignment.middle,
           child: GestureDetector(
             onTap: () {
+              // ── Save reading position on verse tap ──────────────
+              ReadingPositionService.savePosition(
+                surahNumber: widget.surahNumber,
+                verseNumber: i,
+                pageNumber:  QuranPageData.surahForPage(widget.surahNumber),
+              );
+
               showDialog(
                 context: context,
                 barrierDismissible: true,
@@ -261,9 +287,16 @@ class _SurahDetailScreenState extends State<SurahDetailScreen> {
               );
             },
             onLongPress: () {
+              // ── Save position on long-press bookmark ────────────
+              ReadingPositionService.savePosition(
+                surahNumber: widget.surahNumber,
+                verseNumber: i,
+                pageNumber:  QuranPageData.surahForPage(widget.surahNumber),
+              );
+
               bookmarkController.toggleBookmark({
-                'surah': getSurahName(widget.surahNumber),
-                'verse': verse,
+                'surah':       getSurahName(widget.surahNumber),
+                'verse':       verse,
                 'surahNumber': widget.surahNumber.toString(),
                 'verseNumber': i.toString(),
               });

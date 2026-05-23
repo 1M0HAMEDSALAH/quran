@@ -13,27 +13,36 @@ class ReaderSelectionDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<SettingsController>();
+    final primaryColor = const Color(0xFF0F3E33);
+    final goldAccent = const Color(0xFFCDA047);
     
     return Obx(() {
       final isDarkMode = themeController.isDarkMode.value;
       
       return Dialog(
-        backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: isDarkMode ? goldAccent.withOpacity(0.3) : primaryColor.withOpacity(0.1),
+            width: 1,
+          )
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'اختر القارئ',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 22,
+                  fontFamily: "Amiri",
                   fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : Colors.black87,
+                  color: isDarkMode ? goldAccent : primaryColor,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Flexible(
                 child: SingleChildScrollView(
                   child: Column(
@@ -45,50 +54,51 @@ class ReaderSelectionDialog extends StatelessWidget {
                           controller.changeReader(reader.id, reader.quality);
                           Navigator.of(context).pop();
                         },
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+                          margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? isDarkMode 
-                                    ? Colors.teal.shade900
-                                    : Colors.teal.withOpacity(0.1)
-                                : isDarkMode
-                                    ? Colors.grey.shade800
-                                    : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(8),
+                                    ? goldAccent.withOpacity(0.1)
+                                    : primaryColor.withOpacity(0.05)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
                                   ? isDarkMode
-                                      ? Colors.tealAccent
-                                      : Colors.teal
+                                      ? goldAccent
+                                      : primaryColor
                                   : isDarkMode
-                                      ? Colors.grey.shade700
-                                      : Colors.grey.shade300,
+                                      ? Colors.white10
+                                      : Colors.black12,
                               width: isSelected ? 2 : 1,
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(
-                                isSelected ? Icons.check_circle : Icons.person,
+                                isSelected ? Icons.check_circle : Icons.person_outline,
                                 color: isSelected
                                     ? isDarkMode
-                                        ? Colors.tealAccent
-                                        : Colors.teal
+                                        ? goldAccent
+                                        : primaryColor
                                     : isDarkMode
-                                        ? Colors.grey.shade400
-                                        : Colors.grey.shade600,
+                                        ? Colors.white54
+                                        : Colors.black54,
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   reader.name,
                                   style: TextStyle(
                                     fontSize: 16,
+                                    fontFamily: "Amiri",
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                    color: isDarkMode ? Colors.white : Colors.black87,
+                                    color: isSelected 
+                                        ? isDarkMode ? goldAccent : primaryColor 
+                                        : isDarkMode ? Colors.white : Colors.black87,
                                   ),
                                 ),
                               ),
@@ -100,14 +110,19 @@ class ReaderSelectionDialog extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+                ),
                 child: Text(
                   'إلغاء',
                   style: TextStyle(
-                    color: isDarkMode ? Colors.tealAccent : Colors.teal,
-                    fontSize: 16,
+                    color: isDarkMode ? Colors.white70 : Colors.black54,
+                    fontSize: 18,
+                    fontFamily: "Amiri",
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),

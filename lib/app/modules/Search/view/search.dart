@@ -18,19 +18,17 @@ class SearchScreen extends StatelessWidget {
         appBar: _buildAppBar(),
         body: Obx(() {
           final isDarkMode = settingsController.isDarkMode.value;
+          final primaryColor = const Color(0xFF0F3E33);
+          final goldAccent = const Color(0xFFCDA047);
+
           return Container(
             decoration: BoxDecoration(
-              gradient: isDarkMode
-                  ? null
-                  : LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF1F6E8C).withOpacity(0.1),
-                        Colors.white,
-                      ],
-                    ),
-              color: isDarkMode ? Colors.grey[900] : null,
+              color: isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9F6F0),
+              image: DecorationImage(
+                image: const AssetImage('assets/islamic_pattern.png'),
+                opacity: isDarkMode ? 0.05 : 0.03,
+                repeat: ImageRepeat.repeat,
+              ),
             ),
             child: Column(
               children: [
@@ -52,9 +50,24 @@ class SearchScreen extends StatelessWidget {
   // ==================== App Bar ====================
 
   PreferredSizeWidget _buildAppBar() {
+    final primaryColor = const Color(0xFF0F3E33);
+    final goldAccent = const Color(0xFFCDA047);
+
     return AppBar(
       elevation: 0,
-      title: const Text('البحث في القرآن الكريم'),
+      backgroundColor: Colors.transparent,
+      title: Obx(() {
+        final isDarkMode = settingsController.isDarkMode.value;
+        return Text(
+          'البحث في القرآن الكريم',
+          style: TextStyle(
+            fontSize: 22,
+            fontFamily: "Amiri",
+            fontWeight: FontWeight.bold,
+            color: isDarkMode ? goldAccent : primaryColor,
+          ),
+        );
+      }),
       centerTitle: true,
       actions: [
         Obx(() => searchController.recentSearches.isNotEmpty
@@ -126,20 +139,24 @@ class SearchScreen extends StatelessWidget {
   // ==================== Search Bar ====================
 
   Widget _buildSearchBar(bool isDarkMode) {
+    final primaryColor = const Color(0xFF0F3E33);
+    final goldAccent = const Color(0xFFCDA047);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[800] : Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: isDarkMode
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDarkMode ? Colors.white10 : primaryColor.withOpacity(0.1),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: TextField(
         controller: textController,
@@ -593,12 +610,8 @@ class SearchScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 40),
             SvgPicture.asset(
-              'assets/images/quran_icon.svg',
+              'assets/open-quran-islam-svgrepo-com.svg',
               height: 100,
-              // ignore: deprecated_member_use
-              color: isDarkMode
-                  ? Colors.white54
-                  : AppColor.primaryColor.withOpacity(0.5),
             ),
             const SizedBox(height: 24),
             const Text(
@@ -632,17 +645,21 @@ class SearchScreen extends StatelessWidget {
   }
 
   Widget _buildSearchTipsCard(bool isDarkMode) {
+    final primaryColor = const Color(0xFF0F3E33);
+    final goldAccent = const Color(0xFFCDA047);
+
     return Container(
       width: 320,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[800] : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: isDarkMode ? Colors.white10 : primaryColor.withOpacity(0.05)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 1,
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),

@@ -1,7 +1,5 @@
 import 'package:quran_app/index.dart';
 
-
-
 // ignore: use_key_in_widget_constructors
 class BookmarkScreen extends StatelessWidget {
   final BookmarkController controller = Get.put(BookmarkController());
@@ -10,70 +8,85 @@ class BookmarkScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = settingsController.isDarkMode.value;
+    final primaryColor = const Color(0xFF0F3E33);
+    final goldAccent = const Color(0xFFCDA047);
 
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
+        backgroundColor:
+            isDarkMode ? const Color(0xFF121212) : const Color(0xFFF9F6F0),
         appBar: AppBar(
+          backgroundColor: Colors.transparent,
           title: Text(
             'المفضلة',
             style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: isDarkMode ? Colors.white : Colors.black,fontFamily: "BahijTheSansArabic"
-            ),
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? goldAccent : primaryColor,
+                fontFamily: "Amiri"),
           ),
           centerTitle: true,
           elevation: 0,
+          iconTheme: IconThemeData(
+            color: isDarkMode ? goldAccent : primaryColor,
+          ),
         ),
-        body: Obx(() {
-          return Container(
-            decoration: BoxDecoration(
-              gradient: isDarkMode
-                  ? null
-                  : LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF1F6E8C).withOpacity(0.1),
-                        Colors.white,
-                      ],
-                    ),
-              color: isDarkMode ? Colors.grey[900] : null,
+        body: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: const AssetImage('assets/islamic_pattern.png'),
+              opacity: isDarkMode ? 0.05 : 0.03,
+              repeat: ImageRepeat.repeat,
             ),
-            child: _buildBookmarkContent(isDarkMode),
-          );
-        }),
+          ),
+          child: Obx(() {
+            return _buildBookmarkContent(isDarkMode, primaryColor, goldAccent);
+          }),
+        ),
       ),
     );
   }
 
-  Widget _buildBookmarkContent(bool isDarkMode) {
+  Widget _buildBookmarkContent(
+      bool isDarkMode, Color primaryColor, Color goldAccent) {
     if (controller.bookmarks.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.bookmark_border,
-              size: 80,
-              color: isDarkMode ? Colors.grey[600] : Colors.grey[300],
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDarkMode
+                    ? Colors.white10
+                    : primaryColor.withOpacity(0.05),
+              ),
+              child: Icon(
+                Icons.bookmark_outline,
+                size: 80,
+                color: isDarkMode
+                    ? goldAccent.withOpacity(0.5)
+                    : primaryColor.withOpacity(0.5),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Text(
               'لا توجد آيات في المفضلة',
               style: TextStyle(
-                fontSize: 20,
-                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],fontFamily: "BahijTheSansArabic"
-              ),
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? goldAccent : primaryColor,
+                  fontFamily: "Amiri"),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Text(
               'يمكنك إضافة الآيات إلى المفضلة أثناء القراءة',
               style: TextStyle(
-                fontSize: 16,
-                color: isDarkMode ? Colors.grey[500] : Colors.grey[500],fontFamily: "BahijTheSansArabic"
-              ),
+                  fontSize: 16,
+                  color: isDarkMode ? Colors.white54 : Colors.black54,
+                  fontFamily: "Amiri"),
             ),
           ],
         ),
@@ -81,6 +94,8 @@ class BookmarkScreen extends StatelessWidget {
     }
 
     return RefreshIndicator(
+      color: goldAccent,
+      backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
       onRefresh: () async {
         controller.loadBookmarks();
       },
@@ -93,91 +108,147 @@ class BookmarkScreen extends StatelessWidget {
             key: Key(index.toString()),
             direction: DismissDirection.endToStart,
             background: Container(
+              margin: const EdgeInsets.only(bottom: 16),
               alignment: Alignment.centerRight,
-              padding: EdgeInsets.only(right: 20),
+              padding: const EdgeInsets.only(right: 24),
               decoration: BoxDecoration(
-                color: Colors.red.shade400,
-                borderRadius: BorderRadius.circular(12),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFE53935), Color(0xFFC62828)],
+                ),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: const Icon(
-                Icons.delete_outline,
+                Icons.delete_sweep,
                 color: Colors.white,
-                size: 30,
+                size: 32,
               ),
             ),
             onDismissed: (direction) {
               controller.toggleBookmark(bookmark);
             },
-            child: Card(
-              elevation: isDarkMode ? 0 : 2,
-              margin: const EdgeInsets.only(bottom: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: isDarkMode
+                      ? Colors.white10
+                      : primaryColor.withOpacity(0.05),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
-              color: isDarkMode ? Colors.grey[800] : Colors.white,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  Get.to(SurahDetailScreen(
-                    surahNumber: int.parse(bookmark['surahNumber']),
-                    highlightedVerse: int.parse(bookmark['verseNumber']),
-                  ));
-                },
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.bookmark,
-                            color: AppColor.primaryColor,
-                            size: 24,
-                          ),
-                          SizedBox(width: 8),
-                          Text(
-                            'سورة ${bookmark["surah"]}',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColor.primaryColor,fontFamily: "BahijTheSansArabic"
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    Get.to(SurahDetailScreen(
+                      surahNumber: int.parse(bookmark['surahNumber']),
+                      highlightedVerse: int.parse(bookmark['verseNumber']),
+                    ));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: isDarkMode
+                                    ? goldAccent.withOpacity(0.1)
+                                    : primaryColor.withOpacity(0.05),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.bookmark,
+                                color: isDarkMode ? goldAccent : primaryColor,
+                                size: 24,
+                              ),
                             ),
-                          ),
-                          Spacer(),
-                          Text(
-                            'الآية ${bookmark["verseNumber"]}',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isDarkMode
-                                  ? Colors.grey[400]
-                                  : Colors.grey[600],fontFamily: "BahijTheSansArabic"
+                            const SizedBox(width: 12),
+                            Text(
+                              'سورة ${bookmark["surah"]}',
+                              style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: isDarkMode ? goldAccent : primaryColor,
+                                  fontFamily: "Amiri"),
                             ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 4),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: isDarkMode
+                                        ? goldAccent.withOpacity(0.3)
+                                        : primaryColor.withOpacity(0.2)),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                'آية ${bookmark["verseNumber"]}',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDarkMode
+                                        ? Colors.white70
+                                        : Colors.black87,
+                                    fontFamily: "Amiri"),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          bookmark["verse"]!,
+                          style: TextStyle(
+                            fontSize: 22,
+                            height: 1.8,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode
+                                ? Colors.white.withOpacity(0.9)
+                                : Colors.black87,
+                            fontFamily: settingsController.arabicFontFamily,
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 12),
-                      Text(
-                        bookmark["verse"]!,
-                        style: TextStyle(
-                          fontSize: 20,
-                          height: 1.8,
-                          color: isDarkMode ? Colors.white : Colors.black87,
-                          fontFamily: settingsController.arabicFontFamily,
+                          textAlign: TextAlign.justify,
                         ),
-                        textAlign: TextAlign.right,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'تمت الإضافة: ${bookmark["date"]}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color:
-                              isDarkMode ? Colors.grey[500] : Colors.grey[500],
+                        const SizedBox(height: 16),
+                        Divider(
+                            color:
+                                isDarkMode ? Colors.white10 : Colors.black12),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Icon(Icons.access_time,
+                                size: 14,
+                                color: isDarkMode
+                                    ? Colors.white38
+                                    : Colors.black38),
+                            const SizedBox(width: 4),
+                            Text(
+                              'أُضيفت: ${bookmark["date"]}',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDarkMode
+                                      ? Colors.white38
+                                      : Colors.black38,
+                                  fontFamily: "Amiri"),
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.left,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),

@@ -1,3 +1,5 @@
+import 'package:quran_app/app/modules/Sura/reading_position_service.dart';
+import 'package:quran_app/app/modules/Sura/view/quran_page_view.dart';
 import 'package:quran_app/index.dart';
 import 'package:http/http.dart' as http;
 
@@ -112,8 +114,20 @@ class SurahListController extends GetxController {
 
   void navigateToSurahDetail(int surahNumber) {
     selectedIndex.value = surahNumber - 1;
+
+    // Save reading position so the user can return here from any screen
+    ReadingPositionService.savePosition(
+      surahNumber: surahNumber,
+      verseNumber: 1,
+      pageNumber: QuranPageData.surahForPage(surahNumber),
+    );
+
     Get.to(
-      () => SurahDetailScreen(surahNumber: surahNumber),
+      () => QuranPageViewScreen(
+        initialPage: QuranPageData.surahForPage(surahNumber),
+        highlightSurah: surahNumber,
+        highlightVerse: 1,
+      ),
       transition: Transition.fadeIn,
       duration: const Duration(milliseconds: 300),
     );

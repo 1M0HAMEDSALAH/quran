@@ -124,7 +124,7 @@ class _QiblaScreenState extends State<QiblaScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A1128),
+      backgroundColor: const Color(0xFF0F3E33), // Deep Green
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -134,22 +134,33 @@ class _QiblaScreenState extends State<QiblaScreen>
             Text(
               'اتجاه القبلة',
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Color(0xFFCDA047), // Gold
+                fontFamily: "Amiri",
               ),
             ),
             Text(
               'Qibla Direction',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: 14,
                 color: Colors.white70,
+                fontFamily: "Amiri",
               ),
             ),
           ],
         ),
       ),
-      body: _buildBody(),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/islamic_pattern.png'),
+            opacity: 0.05,
+            repeat: ImageRepeat.repeat,
+          ),
+        ),
+        child: _buildBody(),
+      ),
     );
   }
 
@@ -195,7 +206,7 @@ class _QiblaScreenState extends State<QiblaScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00D9FF)),
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFCDA047)),
             strokeWidth: 3,
           ),
           SizedBox(height: 24),
@@ -204,7 +215,8 @@ class _QiblaScreenState extends State<QiblaScreen>
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.white70,
-              fontSize: 16,
+              fontSize: 18,
+              fontFamily: "Amiri",
             ),
           ),
         ],
@@ -221,7 +233,7 @@ class _QiblaScreenState extends State<QiblaScreen>
           children: [
             const Icon(
               Icons.error_outline,
-              color: Colors.redAccent,
+              color: Color(0xFFCDA047),
               size: 64,
             ),
             const SizedBox(height: 24),
@@ -230,11 +242,12 @@ class _QiblaScreenState extends State<QiblaScreen>
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 18,
                 height: 1.5,
+                fontFamily: "Amiri",
               ),
             ),
-           const  SizedBox(height: 32),
+            const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () {
                 setState(() {
@@ -245,11 +258,21 @@ class _QiblaScreenState extends State<QiblaScreen>
                 _init();
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('إعادة المحاولة / Retry'),
+              label: const Text(
+                'إعادة المحاولة / Retry',
+                style: TextStyle(
+                    fontFamily: "Amiri",
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00D9FF),
-                foregroundColor: const Color(0xFF0A1128),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: const Color(0xFFCDA047),
+                foregroundColor: const Color(0xFF0F3E33),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ],
@@ -330,7 +353,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Color(0xFF00FF88),
+                                  color: const Color(0xFFCDA047),
                                   width: 2,
                                 ),
                               ),
@@ -345,13 +368,13 @@ class _QiblaScreenState extends State<QiblaScreen>
                             shape: BoxShape.circle,
                             gradient: const RadialGradient(
                               colors: [
-                                Color(0xFF1A2744),
-                                Color(0xFF0A1128),
+                                Color(0xFF1E6C58),
+                                Color(0xFF0F3E33),
                               ],
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color:const  Color(0xFF00D9FF).withOpacity(0.3),
+                                color: const Color(0xFFCDA047).withOpacity(0.3),
                                 blurRadius: 30,
                                 spreadRadius: 5,
                               ),
@@ -368,46 +391,149 @@ class _QiblaScreenState extends State<QiblaScreen>
                           ),
                         ),
 
-                        // Kaaba icon and arrow
+                        // Kaaba icon and arrow - distinctive design
                         Transform.rotate(
                           angle: rotation,
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                Icons.location_on,
-                                size: 40,
-                                color: isAligned
-                                    ?const  Color(0xFF00FF88)
-                                    :const  Color(0xFF00D9FF),
+                              // Glowing Kaaba icon container
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.easeInOut,
+                                width: 64,
+                                height: 64,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: isAligned
+                                        ? [
+                                            const Color(0xFFCDA047),
+                                            const Color(0xFFB8860B),
+                                          ]
+                                        : [
+                                            Colors.white.withOpacity(0.2),
+                                            Colors.white.withOpacity(0.05),
+                                          ],
+                                  ),
+                                  boxShadow: isAligned
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(0xFFCDA047)
+                                                .withOpacity(0.6),
+                                            blurRadius: 20,
+                                            spreadRadius: 4,
+                                          ),
+                                          BoxShadow(
+                                            color: const Color(0xFFFFD700)
+                                                .withOpacity(0.3),
+                                            blurRadius: 40,
+                                            spreadRadius: 8,
+                                          ),
+                                        ]
+                                      : [
+                                          BoxShadow(
+                                            color:
+                                                Colors.white.withOpacity(0.1),
+                                            blurRadius: 10,
+                                            spreadRadius: 2,
+                                          ),
+                                        ],
+                                ),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Kaaba icon (mosque)
+                                    Icon(
+                                      Icons.mosque_rounded,
+                                      size: 32,
+                                      color: isAligned
+                                          ? const Color(0xFF0F3E33)
+                                          : Colors.white,
+                                    ),
+                                    // Small crescent accent
+                                    Positioned(
+                                      top: 6,
+                                      right: 8,
+                                      child: AnimatedOpacity(
+                                        duration:
+                                            const Duration(milliseconds: 400),
+                                        opacity: isAligned ? 1.0 : 0.4,
+                                        child: Icon(
+                                          Icons.nightlight_round,
+                                          size: 14,
+                                          color: isAligned
+                                              ? const Color(0xFF0F3E33)
+                                              : const Color(0xFFCDA047),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                             const  SizedBox(height: 8),
-                              Container(
+                              const SizedBox(height: 8),
+                              // Kaaba label
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 400),
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                                  horizontal: 14,
                                   vertical: 6,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: isAligned
+                                      ? const Color(0xFFCDA047)
+                                          .withOpacity(0.25)
+                                      : Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: isAligned
+                                        ? const Color(0xFFCDA047)
+                                            .withOpacity(0.7)
+                                        : Colors.white.withOpacity(0.2),
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: isAligned
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(0xFFCDA047)
+                                                .withOpacity(0.3),
+                                            blurRadius: 8,
+                                          )
+                                        ]
+                                      : null,
                                 ),
-                                child: const Text(
+                                child: Text(
                                   'الكعبة\nKaaba',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12,
+                                    color: isAligned
+                                        ? const Color(0xFFCDA047)
+                                        : Colors.white,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
+                                    fontFamily: "Amiri",
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Icon(
-                                Icons.arrow_downward_rounded,
-                                size: 60,
-                                color: isAligned
-                                    ? Color(0xFF00FF88)
-                                    : Color(0xFF00D9FF),
+                              const SizedBox(height: 10),
+                              // Animated directional arrow
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 400),
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isAligned
+                                      ? const Color(0xFFCDA047)
+                                          .withOpacity(0.15)
+                                      : Colors.transparent,
+                                ),
+                                child: Icon(
+                                  Icons.arrow_downward_rounded,
+                                  size: 56,
+                                  color: isAligned
+                                      ? const Color(0xFFCDA047)
+                                      : Colors.white54,
+                                ),
                               ),
                             ],
                           ),
@@ -415,22 +541,33 @@ class _QiblaScreenState extends State<QiblaScreen>
                       ],
                     ),
 
-                    SizedBox(height: 40),
+                    const SizedBox(height: 40),
 
                     // Status indicator
                     AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                       decoration: BoxDecoration(
                         color: isAligned
-                            ? Color(0xFF00FF88).withOpacity(0.2)
+                            ? const Color(0xFFCDA047).withOpacity(0.2)
                             : Colors.white.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(24),
                         border: Border.all(
-                          color: isAligned ? Color(0xFF00FF88) : Colors.white38,
+                          color: isAligned
+                              ? const Color(0xFFCDA047)
+                              : Colors.white38,
                           width: 2,
                         ),
+                        boxShadow: isAligned
+                            ? [
+                                BoxShadow(
+                                  color:
+                                      const Color(0xFFCDA047).withOpacity(0.3),
+                                  blurRadius: 10,
+                                )
+                              ]
+                            : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -438,20 +575,23 @@ class _QiblaScreenState extends State<QiblaScreen>
                           Icon(
                             isAligned ? Icons.check_circle : Icons.navigation,
                             color: isAligned
-                                ? Color(0xFF00FF88)
-                                : Color(0xFF00D9FF),
+                                ? const Color(0xFFCDA047)
+                                : Colors.white70,
                             size: 24,
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Text(
                             isAligned
                                 ? 'الاتجاه صحيح ✓\nCorrectly Aligned'
                                 : 'استمر بالتدوير\nKeep Rotating',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Colors.white,
+                              color: isAligned
+                                  ? const Color(0xFFCDA047)
+                                  : Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              fontFamily: "Amiri",
                               height: 1.3,
                             ),
                           ),
@@ -459,15 +599,16 @@ class _QiblaScreenState extends State<QiblaScreen>
                       ),
                     ),
 
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
                     // Qibla angle
                     Text(
                       '${_qiblaDirection!.toStringAsFixed(1)}°',
-                      style: TextStyle(
-                        color: Color(0xFF00D9FF),
-                        fontSize: 32,
+                      style: const TextStyle(
+                        color: Color(0xFFCDA047),
+                        fontSize: 36,
                         fontWeight: FontWeight.bold,
+                        fontFamily: "Amiri",
                       ),
                     ),
                   ],

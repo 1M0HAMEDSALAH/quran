@@ -284,15 +284,17 @@ class AzkarView extends GetView<AzkarController> {
   }
 
   Widget _buildTasbihView(BuildContext context) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color primaryColor = const Color(0xFF0F3E33);
+    final Color goldAccent = const Color(0xFFCDA047);
+
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Get.theme.colorScheme.surface,
-            Get.theme.colorScheme.primaryContainer.withOpacity(0.1),
-          ],
+        color: isDark ? const Color(0xFF121212) : const Color(0xFFF9F6F0),
+        image: DecorationImage(
+          image: const AssetImage('assets/islamic_pattern.png'),
+          opacity: isDark ? 0.05 : 0.03,
+          repeat: ImageRepeat.repeat,
         ),
       ),
       child: Center(
@@ -303,15 +305,25 @@ class AzkarView extends GetView<AzkarController> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Title
-                const Text(
-                  'المسبحة الإلكترونية',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: "BahijTheSansArabic",
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.diamond_outlined, color: goldAccent, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'المسبحة الإلكترونية',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: "Amiri",
+                        color: isDark ? goldAccent : primaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(Icons.diamond_outlined, color: goldAccent, size: 20),
+                  ],
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 50),
 
                 // Progress Ring with Counter
                 Obx(() {
@@ -323,16 +335,29 @@ class AzkarView extends GetView<AzkarController> {
                     children: [
                       // Progress Ring
                       SizedBox(
-                        width: 220,
-                        height: 220,
+                        width: 260,
+                        height: 260,
                         child: CircularProgressIndicator(
                           value: progress,
-                          strokeWidth: 12,
-                          backgroundColor: Get.theme.colorScheme.surfaceVariant,
+                          strokeWidth: 10,
+                          backgroundColor: isDark
+                              ? Colors.white10
+                              : primaryColor.withOpacity(0.1),
+                          strokeCap: StrokeCap.round,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            progress >= 1.0
-                                ? Colors.green
-                                : Get.theme.colorScheme.primary,
+                            progress >= 1.0 ? goldAccent : primaryColor,
+                          ),
+                        ),
+                      ),
+                      // Inner Decorative Circle
+                      Container(
+                        width: 230,
+                        height: 230,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: goldAccent.withOpacity(0.3),
+                            width: 1,
                           ),
                         ),
                       ),
@@ -343,22 +368,33 @@ class AzkarView extends GetView<AzkarController> {
                           Text(
                             '${controller.tasbihCount.value}',
                             style: TextStyle(
-                              fontSize:
-                                  MediaQuery.of(context).size.width * 0.15,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: "BahijTheSansArabic",
+                              fontSize: 60,
+                              fontWeight: FontWeight.w600,
+                              fontFamily: "Amiri",
                               color: progress >= 1.0
-                                  ? Colors.green
-                                  : Get.theme.colorScheme.primary,
+                                  ? goldAccent
+                                  : (isDark ? Colors.white : primaryColor),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'من ${controller.dailyTargetCount.value}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontFamily: "BahijTheSansArabic",
-                              color: Get.theme.colorScheme.onSurfaceVariant,
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white10
+                                  : primaryColor.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              'من ${controller.dailyTargetCount.value}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontFamily: "Amiri",
+                                color: isDark
+                                    ? Colors.white70
+                                    : primaryColor.withOpacity(0.8),
+                              ),
                             ),
                           ),
                         ],
@@ -367,7 +403,7 @@ class AzkarView extends GetView<AzkarController> {
                   );
                 }),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 50),
 
                 // Main Tasbih Button with Animation
                 Obx(() {
@@ -376,69 +412,65 @@ class AzkarView extends GetView<AzkarController> {
 
                   return GestureDetector(
                     onTap: controller.incrementTasbih,
+                    behavior: HitTestBehavior.opaque,
                     child: TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0.0, end: 1.0),
                       duration: const Duration(milliseconds: 300),
                       builder: (context, value, child) {
                         return Transform.scale(
-                          scale: 1.0 - (value * 0.05),
+                          scale: 1.0 - (value * 0.02),
                           child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: 160,
-                            height: 160,
+                            duration: const Duration(milliseconds: 300),
+                            width: 130,
+                            height: 130,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               gradient: LinearGradient(
                                 colors: isCompleted
-                                    ? [Colors.green, Colors.green.shade700]
-                                    : [
-                                        Get.theme.colorScheme.primary,
-                                        Get.theme.colorScheme.primaryContainer,
-                                      ],
+                                    ? [goldAccent, const Color(0xFFA67C00)]
+                                    : [primaryColor, const Color(0xFF165A4B)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: (isCompleted
-                                          ? Colors.green
-                                          : Get.theme.colorScheme.primary)
-                                      .withOpacity(0.4),
-                                  blurRadius: 20,
-                                  spreadRadius: 5,
-                                  offset: const Offset(0, 4),
+                                  color:
+                                      (isCompleted ? goldAccent : primaryColor)
+                                          .withOpacity(0.4),
+                                  blurRadius: 25,
+                                  spreadRadius: 8,
+                                  offset: const Offset(0, 8),
+                                ),
+                                BoxShadow(
+                                  color: Colors.white
+                                      .withOpacity(isDark ? 0.05 : 0.3),
+                                  blurRadius: 10,
+                                  // inset: true,
                                 ),
                               ],
                             ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(80),
-                                onTap: controller.incrementTasbih,
-                                child: Center(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        isCompleted
-                                            ? Icons.check_circle_outline
-                                            : Icons.touch_app,
-                                        size: 50,
-                                        color: Colors.white,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        isCompleted ? 'مكتمل' : 'اضغط',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: "BahijTheSansArabic",
-                                        ),
-                                      ),
-                                    ],
+                            child: Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isCompleted
+                                        ? Icons.verified
+                                        : Icons.touch_app,
+                                    size: 40,
+                                    color: Colors.white,
                                   ),
-                                ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    isCompleted ? 'اكتمل' : 'سبِّح',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: "Amiri",
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -448,7 +480,7 @@ class AzkarView extends GetView<AzkarController> {
                   );
                 }),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 50),
 
                 // Action Buttons Row
                 Row(
@@ -464,27 +496,25 @@ class AzkarView extends GetView<AzkarController> {
                           onPressed:
                               hasProgress ? controller.resetTasbih : null,
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.orange,
+                            foregroundColor: Colors.redAccent,
                             side: BorderSide(
                               color: hasProgress
-                                  ? Colors.orange
-                                  : Colors.grey.withOpacity(0.3),
+                                  ? Colors.redAccent.withOpacity(0.5)
+                                  : Colors.grey.withOpacity(0.2),
                             ),
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 16,
-                            ),
+                                horizontal: 24, vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
                           icon: const Icon(Icons.refresh, size: 20),
                           label: const Text(
-                            'إعادة تعيين',
+                            'تصفير',
                             style: TextStyle(
-                              fontFamily: "BahijTheSansArabic",
+                              fontFamily: "Amiri",
                               fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                              fontSize: 16,
                             ),
                           ),
                         ),
@@ -497,84 +527,29 @@ class AzkarView extends GetView<AzkarController> {
                     OutlinedButton.icon(
                       onPressed: () => _showTargetDialog(context),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: Get.theme.colorScheme.primary,
+                        foregroundColor: isDark ? goldAccent : primaryColor,
                         side: BorderSide(
-                          color: Get.theme.colorScheme.primary,
+                          color: (isDark ? goldAccent : primaryColor)
+                              .withOpacity(0.5),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
+                            horizontal: 24, vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
                       icon: const Icon(Icons.flag_outlined, size: 20),
                       label: const Text(
-                        'الهدف',
+                        'تحديد الهدف',
                         style: TextStyle(
-                          fontFamily: "BahijTheSansArabic",
+                          fontFamily: "Amiri",
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 16,
                         ),
                       ),
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 24),
-
-                // Progress Stats Card
-                Obx(() {
-                  final percentage = ((controller.tasbihCount.value /
-                              controller.dailyTargetCount.value) *
-                          100)
-                      .clamp(0, 100)
-                      .toInt();
-                  final remaining = (controller.dailyTargetCount.value -
-                          controller.tasbihCount.value)
-                      .clamp(0, controller.dailyTargetCount.value);
-
-                  return Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildStatItem(
-                                context,
-                                icon: Icons.percent,
-                                label: 'النسبة',
-                                value: '$percentage%',
-                                color: percentage >= 100
-                                    ? Colors.green
-                                    : Get.theme.colorScheme.primary,
-                              ),
-                              Container(
-                                width: 1,
-                                height: 40,
-                                color: Get.theme.colorScheme.outlineVariant,
-                              ),
-                              _buildStatItem(
-                                context,
-                                icon: Icons.trending_up,
-                                label: 'المتبقي',
-                                value: '$remaining',
-                                color: Get.theme.colorScheme.secondary,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }),
               ],
             ),
           ),
@@ -620,19 +595,35 @@ class AzkarView extends GetView<AzkarController> {
     final targetController = TextEditingController(
       text: controller.dailyTargetCount.value.toString(),
     );
+    
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color primaryColor = const Color(0xFF0F3E33);
+    final Color goldAccent = const Color(0xFFCDA047);
 
     Get.dialog(
       AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text(
-          'تعيين الهدف اليومي',
-          style: TextStyle(
-            fontFamily: "BahijTheSansArabic",
-            fontWeight: FontWeight.bold,
+          borderRadius: BorderRadius.circular(24),
+          side: BorderSide(
+            color: isDark ? Colors.white10 : primaryColor.withOpacity(0.1),
           ),
-          textAlign: TextAlign.center,
+        ),
+        title: Column(
+          children: [
+            Icon(Icons.flag_circle, color: goldAccent, size: 40),
+            const SizedBox(height: 8),
+            Text(
+              'تعيين الهدف اليومي',
+              style: TextStyle(
+                fontFamily: "Amiri",
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                color: isDark ? goldAccent : primaryColor,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -641,80 +632,129 @@ class AzkarView extends GetView<AzkarController> {
               controller: targetController,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: "BahijTheSansArabic",
-                fontSize: 18,
+              style: TextStyle(
+                fontFamily: "Amiri",
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black87,
               ),
               decoration: InputDecoration(
                 labelText: 'العدد المستهدف',
-                labelStyle: const TextStyle(
-                  fontFamily: "BahijTheSansArabic",
+                labelStyle: TextStyle(
+                  fontFamily: "Amiri",
+                  color: isDark ? Colors.white54 : primaryColor.withOpacity(0.6),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: goldAccent, width: 2),
                 ),
-                prefixIcon: const Icon(Icons.flag),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide(color: isDark ? Colors.white24 : primaryColor.withOpacity(0.2)),
+                ),
+                prefixIcon: Icon(Icons.flag, color: isDark ? goldAccent : primaryColor),
+                filled: true,
+                fillColor: isDark ? Colors.white10 : primaryColor.withOpacity(0.02),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Wrap(
-              spacing: 8,
+              spacing: 12,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
               children: [33, 100, 200, 500, 1000].map((count) {
-                return ChoiceChip(
-                  label: Text(
-                    '$count',
-                    style: const TextStyle(
-                      fontFamily: "BahijTheSansArabic",
-                    ),
-                  ),
-                  selected: false,
-                  onSelected: (_) {
+                return InkWell(
+                  onTap: () {
                     targetController.text = count.toString();
                   },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white10 : primaryColor.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: isDark ? Colors.white24 : primaryColor.withOpacity(0.1)),
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontFamily: "Amiri",
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: isDark ? Colors.white : primaryColor,
+                      ),
+                    ),
+                  ),
                 );
               }).toList(),
             ),
           ],
         ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'إلغاء',
-              style: TextStyle(
-                fontFamily: "BahijTheSansArabic",
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () => Get.back(),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Text(
+                    'إلغاء',
+                    style: TextStyle(
+                      fontFamily: "Amiri",
+                      fontSize: 16,
+                      color: isDark ? Colors.white54 : Colors.grey[700],
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final newTarget = int.tryParse(targetController.text);
-              if (newTarget != null && newTarget > 0) {
-                controller.dailyTargetCount.value = newTarget;
-                controller.saveProgress();
-                Get.back();
-                Get.snackbar(
-                  'تم',
-                  'تم تحديث الهدف اليومي إلى $newTarget',
-                  backgroundColor:
-                      Get.theme.colorScheme.primary.withOpacity(0.1),
-                  colorText: Get.theme.colorScheme.primary,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    final newTarget = int.tryParse(targetController.text);
+                    if (newTarget != null && newTarget > 0) {
+                      controller.dailyTargetCount.value = newTarget;
+                      controller.saveProgress();
+                      Get.back();
+                      
+                      // Delay snackbar to prevent GetX LateInitializationError during routing pop
+                      Future.delayed(const Duration(milliseconds: 250), () {
+                        Get.snackbar(
+                          'تم',
+                          'تمت مراجعة وتحديث الهدف اليومي إلى $newTarget',
+                          backgroundColor: isDark ? Colors.white10 : primaryColor.withOpacity(0.1),
+                          colorText: isDark ? goldAccent : primaryColor,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(16),
+                          borderRadius: 16,
+                          icon: Icon(Icons.check_circle, color: isDark ? goldAccent : primaryColor),
+                        );
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'حفظ الهدف',
+                    style: TextStyle(
+                      fontFamily: "Amiri",
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
               ),
-            ),
-            child: const Text(
-              'حفظ',
-              style: TextStyle(
-                fontFamily: "BahijTheSansArabic",
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            ],
           ),
         ],
       ),
@@ -875,6 +915,10 @@ class AzkarView extends GetView<AzkarController> {
 
   Widget _buildAzkarItemCard(
       BuildContext context, AzkarItem item, String categoryName) {
+    final bool isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color primaryColor = const Color(0xFF0F3E33);
+    final Color goldAccent = const Color(0xFFCDA047);
+
     return Obx(() {
       final currentCount = controller.getAzkarProgress(categoryName, item.id);
       final isCompleted =
@@ -882,96 +926,123 @@ class AzkarView extends GetView<AzkarController> {
       final progressPercentage =
           ((currentCount / item.count) * 100).clamp(0, 100).toInt();
 
-      return Card(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        elevation: isCompleted ? 3 : 1,
-        color: isCompleted ? Colors.green.withOpacity(0.05) : null,
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isCompleted
+                ? goldAccent.withOpacity(0.5)
+                : (isDark ? Colors.white10 : primaryColor.withOpacity(0.05)),
+            width: isCompleted ? 1.5 : 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isCompleted
+                  ? goldAccent.withOpacity(0.1)
+                  : Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Azkar text with RTL direction
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Get.theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  item.text,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontFamily: "BahijTheSansArabic",
-                        height: 1.6,
-                        fontSize: 16,
-                      ),
-                  textDirection: TextDirection.rtl,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Progress information row
+              // Decorative header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'العدد المطلوب: ${item.count}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontFamily: "BahijTheSansArabic",
-                            ),
-                      ),
-                      Text(
-                        'المنجز: $currentCount',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontFamily: "BahijTheSansArabic",
-                              color: isCompleted ? Colors.green : Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
+                  Icon(Icons.format_quote,
+                      color: goldAccent.withOpacity(0.5), size: 28),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: isCompleted
-                          ? Colors.green
-                          : Get.theme.colorScheme.primary,
+                          ? goldAccent.withOpacity(0.1)
+                          : primaryColor.withOpacity(0.05),
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: isCompleted
+                              ? goldAccent.withOpacity(0.3)
+                              : Colors.transparent),
                     ),
                     child: Text(
-                      isCompleted ? 'مكتمل ✓' : '$progressPercentage%',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      isCompleted ? 'مكتمل ✓' : '$currentCount / ${item.count}',
+                      style: TextStyle(
+                        color: isCompleted
+                            ? (isDark ? goldAccent : primaryColor)
+                            : (isDark ? Colors.white70 : Colors.black87),
                         fontWeight: FontWeight.bold,
-                        fontFamily: "BahijTheSansArabic",
-                        fontSize: 12,
+                        fontFamily: "Amiri",
+                        fontSize: 14,
                       ),
                     ),
                   ),
                 ],
               ),
-
               const SizedBox(height: 12),
 
-              // Progress bar
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: currentCount / item.count,
-                  minHeight: 8,
-                  backgroundColor: Get.theme.colorScheme.surfaceVariant,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    isCompleted ? Colors.green : Get.theme.colorScheme.primary,
-                  ),
-                ),
+              // Azkar text with RTL direction
+              Text(
+                item.text,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontFamily: "Amiri",
+                      height: 1.8,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          isDark ? Colors.white.withOpacity(0.9) : primaryColor,
+                    ),
+                textDirection: TextDirection.rtl,
+                textAlign: TextAlign.justify,
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
+
+              // Progress bar
+              Stack(
+                children: [
+                  Container(
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white10
+                          : primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    height: 8,
+                    width: MediaQuery.of(context).size.width *
+                        (currentCount / item.count),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isCompleted
+                            ? [goldAccent, const Color(0xFFA67C00)]
+                            : [primaryColor, const Color(0xFF165A4B)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: isCompleted
+                          ? [
+                              BoxShadow(
+                                color: goldAccent.withOpacity(0.4),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ]
+                          : null,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 24),
 
               // Action buttons
               Row(
@@ -979,113 +1050,133 @@ class AzkarView extends GetView<AzkarController> {
                 children: [
                   // Increment button
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: isCompleted
+                    child: GestureDetector(
+                      onTap: isCompleted
                           ? null
                           : () {
                               controller.incrementAzkarProgress(
                                   categoryName, item.id, item.count);
                             },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: isCompleted
-                            ? Colors.green
-                            : Get.theme.colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.grey.withOpacity(0.3),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        decoration: BoxDecoration(
+                          gradient: isCompleted
+                              ? LinearGradient(colors: [
+                                  goldAccent.withOpacity(0.2),
+                                  goldAccent.withOpacity(0.1)
+                                ])
+                              : LinearGradient(colors: [
+                                  primaryColor,
+                                  const Color(0xFF165A4B)
+                                ]),
+                          borderRadius: BorderRadius.circular(14),
+                          border: isCompleted
+                              ? Border.all(color: goldAccent.withOpacity(0.5))
+                              : null,
+                          boxShadow: isCompleted
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                         ),
-                      ),
-                      icon: Icon(
-                        isCompleted ? Icons.check : Icons.add,
-                        size: 20,
-                      ),
-                      label: Text(
-                        isCompleted ? 'مكتمل' : 'تسبيحة',
-                        style: const TextStyle(
-                          fontFamily: "BahijTheSansArabic",
-                          fontWeight: FontWeight.bold,
+                        child: Center(
+                          child: Text(
+                            isCompleted ? 'اكتمل الذكر' : 'سبِّح',
+                            style: TextStyle(
+                              color: isCompleted
+                                  ? (isDark ? goldAccent : primaryColor)
+                                  : Colors.white,
+                              fontFamily: "Amiri",
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(width: 12),
-
-                  // Decrement button (only show if not completed and has progress)
-                  if (!isCompleted && currentCount > 0)
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          controller.decrementAzkarProgress(
-                              categoryName, item.id);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.red,
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        icon: const Icon(Icons.remove, size: 20),
-                        label: const Text(
-                          'إنقاص',
-                          style: TextStyle(
-                            fontFamily: "BahijTheSansArabic",
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  // Reset button for completed items
-                  if (isCompleted)
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          // Reset this specific azkar
+                  if (isCompleted || currentCount > 0) ...[
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () {
+                        if (isCompleted) {
                           controller.azkarProgress[categoryName]?[item.id] = 0;
                           controller.saveProgress();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.orange,
-                          side: const BorderSide(color: Colors.orange),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                        } else {
+                          controller.decrementAzkarProgress(
+                              categoryName, item.id);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white10
+                              : Colors.black.withOpacity(0.04),
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        icon: const Icon(Icons.refresh, size: 20),
-                        label: const Text(
-                          'إعادة',
-                          style: TextStyle(
-                            fontFamily: "BahijTheSansArabic",
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: Icon(
+                          isCompleted ? Icons.refresh : Icons.remove,
+                          color: isDark
+                              ? Colors.white54
+                              : primaryColor.withOpacity(0.7),
+                          size: 24,
                         ),
                       ),
                     ),
+                  ],
                 ],
               ),
+
               if (item.audio != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: OutlinedButton.icon(
-                    onPressed: () {
+                  padding: const EdgeInsets.only(top: 16),
+                  child: InkWell(
+                    onTap: () {
                       Get.snackbar(
-                        'الصوت',
+                        'قيد التطوير',
                         'ميزة الصوت ستكون متاحة قريباً',
-                        backgroundColor: Get.theme.colorScheme.surfaceVariant,
-                        colorText: Get.theme.colorScheme.onSurfaceVariant,
+                        backgroundColor: isDark
+                            ? Colors.white10
+                            : primaryColor.withOpacity(0.1),
+                        colorText: isDark ? goldAccent : primaryColor,
+                        snackPosition: SnackPosition.BOTTOM,
+                        margin: const EdgeInsets.all(16),
+                        borderRadius: 12,
                       );
                     },
-                    icon: const Icon(Icons.volume_up),
-                    label: const Text(
-                      'تشغيل الصوت',
-                      style: TextStyle(
-                        fontFamily: "BahijTheSansArabic",
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                            color: isDark
+                                ? Colors.white24
+                                : primaryColor.withOpacity(0.2)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.volume_up_rounded,
+                              color: isDark ? goldAccent : primaryColor,
+                              size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            'الاستماع للذكر',
+                            style: TextStyle(
+                              fontFamily: "Amiri",
+                              color: isDark ? Colors.white70 : primaryColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
